@@ -3,146 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#1e7a38">
+    <meta name="theme-color" content="#07130d">
     <title>Dados Online</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --fondo: #07130d;
+            --panel: rgba(255, 255, 255, 0.06);
+            --panel-fuerte: rgba(255, 255, 255, 0.1);
+            --borde: rgba(255, 255, 255, 0.12);
+            --texto: #f6f1e2;
+            --tenue: #9fb3a6;
+            --oro: #f5c542;
+            --oro-oscuro: #d99a1e;
+            --rojo: #ff4d4d;
+            --verde: #2ee08a;
+            --culo: #d94bff;
+        }
         * { box-sizing: border-box; }
         html, body { margin: 0; }
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Rubik', system-ui, -apple-system, sans-serif;
+            color: var(--texto);
+            background: radial-gradient(130% 70% at 50% 0%, #14402a 0%, var(--fondo) 65%) fixed, var(--fondo);
+            min-height: 100vh;
+            padding: 12px 12px calc(20px + env(safe-area-inset-bottom));
             text-align: center;
-            background: #f0f0f0;
-            color: #222;
-            padding: 12px;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom));
             -webkit-tap-highlight-color: transparent;
+            transition: background 0.6s;
         }
-        .tarjeta {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 16px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        body.modo-culo {
+            background: radial-gradient(130% 70% at 50% 0%, #4a1666 0%, #12061b 65%) fixed, #12061b;
         }
-        h1 { margin: 4px 0 12px; font-size: 1.6em; }
-        button {
-            padding: 14px 20px;
-            margin: 5px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            touch-action: manipulation;
-        }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        button.gris { background: #6c757d; }
-        button.verde { background: #28a745; }
-        button.gris:disabled, button.verde:disabled { background: #ccc; }
-        button.chico { padding: 8px 12px; font-size: 14px; }
-        button.texto { background: none; color: #007bff; padding: 8px; font-size: 15px; }
-        input {
-            width: 100%;
-            padding: 14px;
-            font-size: 18px;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            margin: 6px 0;
-            text-align: center;
-        }
-        input:focus { outline: none; border-color: #007bff; }
-        #codigoInput { text-transform: uppercase; letter-spacing: 6px; font-weight: bold; }
-        .separador { margin: 18px 0 10px; color: #888; }
+        .contenedor { max-width: 640px; margin: 0 auto; }
         .oculto { display: none !important; }
 
-        /* Barra de sala */
-        #barraSala {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            margin-bottom: 8px;
+        /* ---------- Inicio ---------- */
+        .logo {
+            font-family: 'Bungee', 'Rubik', sans-serif;
+            font-size: clamp(2.4em, 13vw, 3.6em);
+            line-height: 1;
+            margin: 4px 0 6px;
+            background: linear-gradient(180deg, #fff6cc 0%, #f5c542 50%, #b97510 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 6px 18px rgba(245, 197, 66, 0.35));
         }
-        #codigoSala {
-            font-size: 1.1em;
-            font-weight: bold;
-            letter-spacing: 3px;
-            background: #eef4ff;
-            padding: 6px 10px;
-            border-radius: 6px;
+        .logo-dados { font-size: 2.4em; margin-top: 22px; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5)); }
+        .subtitulo { color: var(--tenue); margin: 0 0 26px; }
+        .tarjeta {
+            background: var(--panel);
+            border: 1px solid var(--borde);
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
         }
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 6px 0;
+            font: 500 18px 'Rubik', sans-serif;
+            color: var(--texto);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.35);
+            border: 2px solid var(--borde);
+            border-radius: 14px;
+        }
+        input::placeholder { color: #6f8578; }
+        input:focus { outline: none; border-color: var(--oro); box-shadow: 0 0 0 4px rgba(245, 197, 66, 0.15); }
+        #codigoInput { text-transform: uppercase; letter-spacing: 8px; font-family: 'Bungee', sans-serif; }
+        .separador { margin: 18px 0 10px; color: var(--tenue); font-size: 0.9em; }
 
-        /* Puntuaciones */
+        /* ---------- Botones ---------- */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 18px;
+            border: none;
+            border-radius: 16px;
+            font: 800 18px 'Rubik', sans-serif;
+            letter-spacing: 0.3px;
+            color: #241800;
+            cursor: pointer;
+            touch-action: manipulation;
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.4), 0 12px 24px rgba(0, 0, 0, 0.3);
+            transition: transform 0.08s, box-shadow 0.08s, filter 0.2s, opacity 0.2s;
+        }
+        .btn:active:not(:disabled) { transform: translateY(5px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 4px 10px rgba(0, 0, 0, 0.3); }
+        .btn:disabled { filter: grayscale(1) brightness(0.55); opacity: 0.6; cursor: not-allowed; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3); }
+        .btn-ancho { width: 100%; }
+        .btn-oro { background: linear-gradient(180deg, #ffe79a 0%, #f5c542 45%, #d99a1e 100%); }
+        .btn-verde { background: linear-gradient(180deg, #8affc6 0%, #2ee08a 50%, #13a35d 100%); }
+        .btn-oscuro { background: linear-gradient(180deg, #2a3c32, #18261e); color: var(--texto); border: 1px solid var(--borde); }
+        .btn-culo {
+            background: linear-gradient(180deg, #f5b3ff 0%, #d94bff 50%, #9325cf 100%);
+            color: #fff;
+            text-shadow: 0 2px 3px rgba(60, 0, 80, 0.6);
+        }
+        .btn-culo.activo {
+            box-shadow: 0 0 0 3px #fff, 0 0 30px 6px rgba(217, 75, 255, 0.75), 0 6px 0 rgba(0, 0, 0, 0.4);
+            animation: latido 1.1s ease-in-out infinite;
+        }
+        .btn-chico { padding: 9px 12px; font-size: 14px; border-radius: 12px; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4); }
+        .btn-texto { background: none; box-shadow: none; color: var(--tenue); font-weight: 500; font-size: 15px; text-decoration: underline; }
+        @keyframes latido { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+
+        /* ---------- Barra de sala ---------- */
+        #barraSala { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+        .chip-sala {
+            font-size: 0.75em;
+            color: var(--tenue);
+            letter-spacing: 2px;
+            text-align: left;
+            line-height: 1.1;
+        }
+        #codigoSala { display: block; font-family: 'Bungee', sans-serif; font-size: 1.7em; color: var(--oro); letter-spacing: 4px; }
+        .acciones { display: flex; gap: 6px; }
+
+        /* ---------- Jugadores ---------- */
         #listaPuntuaciones {
             list-style: none;
             padding: 0;
-            margin: 8px 0;
-            display: flex;
-            justify-content: center;
+            margin: 0 0 12px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 8px;
-            flex-wrap: wrap;
         }
-        #listaPuntuaciones li {
-            padding: 8px 12px;
-            border-radius: 6px;
-            background: #eee;
-            font-size: 1em;
+        .jugador {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px 12px;
+            text-align: left;
+            background: var(--panel);
+            border: 1px solid var(--borde);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: box-shadow 0.3s, border-color 0.3s, transform 0.3s;
         }
-        #listaPuntuaciones li.activo {
-            background: #ffc107;
-            font-weight: bold;
-            box-shadow: 0 0 10px rgba(255,193,7,0.5);
+        .jugador.activo {
+            border-color: var(--oro);
+            box-shadow: 0 0 0 1px var(--oro), 0 0 22px rgba(245, 197, 66, 0.4);
+            transform: translateY(-2px);
         }
-        #listaPuntuaciones li.yo { outline: 2px solid #007bff; }
-        #listaPuntuaciones li.desconectado { opacity: 0.5; }
-        .etiqueta { font-size: 0.75em; color: #a15c00; display: block; }
-
-        #infoTurno { margin: 10px 0; font-size: 1.35em; font-weight: bold; color: #333; }
-        #infoTurno.miTurno { color: #1e7a38; }
-
-        canvas {
-            display: block;
-            width: 100%;
-            max-width: 600px;
-            margin: 10px auto 0;
-            border: 1px solid #ccc;
-            touch-action: none;
-            background: #2ea34b; /* Color de mesa de casino */
-            border-radius: 10px;
+        .jugador.desconectado { opacity: 0.45; }
+        .avatar {
+            flex: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font: 800 16px 'Rubik', sans-serif;
+            color: #1b1300;
+            box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
         }
-        #gameInfo { margin: 12px 0; font-size: 1.25em; }
-        #ayudaSeleccion { color: #666; font-size: 0.9em; min-height: 1.2em; }
-        #botones { display: flex; justify-content: center; flex-wrap: wrap; }
-        #botones button { flex: 1 1 140px; max-width: 220px; }
+        .datos { flex: 1; min-width: 0; }
+        .nombre { font-size: 0.85em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .puntos { font-family: 'Bungee', sans-serif; font-size: 1.2em; line-height: 1.1; }
+        .insignia { font-size: 0.68em; color: #ffb35c; letter-spacing: 0.5px; }
+        .barra { position: absolute; left: 0; bottom: 0; height: 4px; background: linear-gradient(90deg, var(--oro-oscuro), var(--oro)); transition: width 0.8s ease; }
 
-        /* Lobby */
-        #lobby p { font-size: 1.1em; }
-
-        /* Fin de partida */
-        #panelFin {
-            background: #fff8e1;
-            border: 2px solid #ffc107;
-            border-radius: 10px;
-            padding: 12px;
-            margin: 10px 0;
-            font-size: 1.2em;
+        /* ---------- Turno y mesa ---------- */
+        #infoTurno { margin: 6px 0 10px; min-height: 2.2em; }
+        #textoTurno { font-family: 'Bungee', sans-serif; font-size: 1.35em; letter-spacing: 1px; }
+        #textoTurno.miTurno { color: var(--oro); text-shadow: 0 0 18px rgba(245, 197, 66, 0.6); animation: latido 1.4s ease-in-out infinite; }
+        #insigniaCulo {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font: 800 0.85em 'Rubik', sans-serif;
+            letter-spacing: 1px;
+            color: #fff;
+            background: linear-gradient(90deg, #9325cf, #d94bff);
+            box-shadow: 0 0 18px rgba(217, 75, 255, 0.7);
         }
+        #mesaMarco {
+            padding: 9px;
+            border-radius: 24px;
+            background: linear-gradient(160deg, #6b4520 0%, #3a230e 55%, #24150a 100%);
+            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), inset 0 -3px 0 rgba(0, 0, 0, 0.4), 0 16px 34px rgba(0, 0, 0, 0.55);
+            transition: background 0.6s, box-shadow 0.6s;
+        }
+        body.modo-culo #mesaMarco {
+            background: linear-gradient(160deg, #8a3cb3 0%, #4b1a68 55%, #250b35 100%);
+            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.2), 0 0 0 2px rgba(217, 75, 255, 0.6), 0 0 40px rgba(217, 75, 255, 0.55);
+        }
+        canvas { display: block; width: 100%; border-radius: 16px; touch-action: manipulation; }
 
-        /* Reglas */
-        details { margin-top: 16px; text-align: left; }
-        summary { cursor: pointer; font-weight: bold; text-align: center; color: #007bff; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-        td { padding: 6px; border-bottom: 1px solid #eee; }
-        td:last-child { text-align: right; font-weight: bold; }
+        #panelTurno { margin: 12px 0 10px; }
+        .etiqueta-turno { font-size: 0.72em; letter-spacing: 3px; color: var(--tenue); }
+        #textoPuntuacion {
+            font-family: 'Bungee', sans-serif;
+            font-size: 2.6em;
+            line-height: 1.05;
+            color: var(--oro);
+            text-shadow: 0 0 20px rgba(245, 197, 66, 0.35);
+        }
+        #textoPuntuacion.salto { animation: salto 0.35s ease-out; }
+        @keyframes salto { 0% { transform: scale(1.25); } 100% { transform: scale(1); } }
+        #ayudaSeleccion { color: var(--tenue); font-size: 0.95em; min-height: 1.3em; margin-top: 4px; }
 
-        /* Avisos */
+        #culoBtn { width: 100%; margin-bottom: 10px; font-size: 20px; padding: 13px; }
+        #botones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        #botones .btn { font-size: 19px; padding: 18px 10px; }
+
+        #lobby p { font-size: 1.05em; color: var(--tenue); }
+        #panelFin { margin-bottom: 12px; border-color: var(--oro); }
+        #textoFin { font-family: 'Bungee', sans-serif; font-size: 1.4em; color: var(--oro); margin-bottom: 8px; }
+
+        details.tarjeta { margin-top: 18px; text-align: left; }
+        summary { cursor: pointer; font-weight: 700; text-align: center; color: var(--oro); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td { padding: 7px 4px; border-bottom: 1px solid var(--borde); }
+        td:last-child { text-align: right; font-weight: 700; color: var(--oro); }
+        details p { color: #d6dccf; line-height: 1.45; }
+
+        /* ---------- Avisos ---------- */
         #avisos {
             position: fixed;
-            left: 12px; right: 12px;
-            top: calc(12px + env(safe-area-inset-top));
+            left: 12px;
+            right: 12px;
+            top: calc(10px + env(safe-area-inset-top));
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -151,80 +242,93 @@
             z-index: 10;
         }
         .aviso {
-            max-width: 500px;
             width: 100%;
+            max-width: 500px;
             padding: 12px 16px;
-            border-radius: 10px;
-            color: white;
-            background: #333;
-            font-size: 1em;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-            animation: entrar 0.25s ease-out;
+            border-radius: 14px;
+            color: #fff;
+            font-weight: 500;
+            background: rgba(20, 30, 25, 0.92);
+            border: 1px solid var(--borde);
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+            animation: entrar 0.3s cubic-bezier(.2, 1.4, .4, 1);
         }
-        .aviso.bien { background: #1e7a38; }
-        .aviso.mal { background: #c62828; }
-        .aviso.error { background: #e65100; }
-        @keyframes entrar { from { transform: translateY(-20px); opacity: 0; } to { transform: none; opacity: 1; } }
+        .aviso.bien { background: linear-gradient(90deg, #0f6b3c, #15965a); }
+        .aviso.mal { background: linear-gradient(90deg, #8c1616, #c62828); }
+        .aviso.error { background: linear-gradient(90deg, #a34400, #e65100); }
+        .aviso.culo { background: linear-gradient(90deg, #7a1fb0, #c03be6); }
+        @keyframes entrar { from { transform: translateY(-24px) scale(0.95); opacity: 0; } to { transform: none; opacity: 1; } }
     </style>
 </head>
 <body>
     <div id="avisos"></div>
 
     <!-- Pantalla de inicio -->
-    <div id="pantallaInicio" class="tarjeta">
-        <h1>🎲 Dados Online</h1>
-        <input id="nombreInput" maxlength="16" placeholder="Tu nombre" autocomplete="nickname">
-        <button id="crearBtn" class="verde" style="width:100%">Crear partida</button>
-        <div class="separador">— o unite a una —</div>
-        <input id="codigoInput" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters">
-        <button id="unirseBtn" style="width:100%">Unirme</button>
+    <div id="pantallaInicio" class="contenedor">
+        <div class="logo-dados">🎲🎲</div>
+        <h1 class="logo">DADOS</h1>
+        <p class="subtitulo">Jugá online con tus amigos</p>
+        <div class="tarjeta">
+            <input id="nombreInput" maxlength="16" placeholder="Tu nombre" autocomplete="nickname">
+            <button id="crearBtn" class="btn btn-oro btn-ancho" style="margin-top:6px">Crear partida</button>
+            <div class="separador">— o unite a una —</div>
+            <input id="codigoInput" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters">
+            <button id="unirseBtn" class="btn btn-verde btn-ancho" style="margin-top:6px">Unirme</button>
+        </div>
     </div>
 
     <!-- Pantalla de sala / juego -->
-    <div id="pantallaSala" class="tarjeta oculto">
+    <div id="pantallaSala" class="contenedor oculto">
         <div id="barraSala">
-            <span>Sala <span id="codigoSala">----</span></span>
-            <span>
-                <button id="invitarBtn" class="chico">Invitar</button>
-                <button id="salirBtn" class="chico gris">Salir</button>
-            </span>
+            <div class="chip-sala">SALA<span id="codigoSala">----</span></div>
+            <div class="acciones">
+                <button id="sonidoBtn" class="btn btn-oscuro btn-chico" aria-label="Sonido">🔊</button>
+                <button id="invitarBtn" class="btn btn-oro btn-chico">Invitar</button>
+                <button id="salirBtn" class="btn btn-oscuro btn-chico">Salir</button>
+            </div>
         </div>
 
         <ul id="listaPuntuaciones"></ul>
 
-        <div id="lobby">
+        <div id="lobby" class="tarjeta">
             <p id="textoLobby">Esperando jugadores…</p>
-            <button id="empezarBtn" class="verde">Empezar partida</button>
+            <button id="empezarBtn" class="btn btn-verde btn-ancho">Empezar partida</button>
         </div>
 
         <div id="juego">
-            <div id="panelFin" class="oculto">
+            <div id="panelFin" class="tarjeta oculto">
                 <div id="textoFin"></div>
-                <button id="revanchaBtn" class="verde">Jugar otra vez</button>
+                <button id="revanchaBtn" class="btn btn-oro">Jugar otra vez</button>
             </div>
 
-            <div id="infoTurno">Turno de: -</div>
-            <canvas id="gameCanvas"></canvas>
+            <div id="infoTurno">
+                <div id="textoTurno">-</div>
+                <div id="insigniaCulo" class="oculto">🍑 TIRO DE CULO</div>
+            </div>
 
-            <div id="gameInfo">
-                <span id="textoPuntuacion">Puntuación del turno: 0</span>
+            <div id="mesaMarco"><canvas id="gameCanvas"></canvas></div>
+
+            <div id="panelTurno">
+                <div class="etiqueta-turno">PUNTOS DEL TURNO</div>
+                <div id="textoPuntuacion">0</div>
                 <div id="ayudaSeleccion"></div>
             </div>
 
+            <button id="culoBtn" class="btn btn-culo">🍑 CULO</button>
             <div id="botones">
-                <button id="lanzarBtn">Lanzar dados</button>
-                <button id="plantarseBtn" class="gris" disabled>Plantarse</button>
+                <button id="lanzarBtn" class="btn btn-oro">🎲 Lanzar</button>
+                <button id="plantarseBtn" class="btn btn-verde" disabled>✋ Plantarse</button>
             </div>
-            <button id="saltarBtn" class="texto oculto">Saltar turno de este jugador</button>
+            <button id="saltarBtn" class="btn btn-texto oculto">Saltar turno de este jugador</button>
         </div>
 
-        <details>
+        <details class="tarjeta">
             <summary>Reglas y puntos</summary>
             <table>
                 <tr><td>Cada 1</td><td>100</td></tr>
                 <tr><td>Cada 5</td><td>50</td></tr>
-                <tr><td>Tres 1</td><td>1000</td></tr>
-                <tr><td>Tres iguales (2 a 6)</td><td>número × 100</td></tr>
+                <tr><td>Pierna de 1 (tres 1)</td><td>1000</td></tr>
+                <tr><td>Pierna de 2 a 6</td><td>número × 100</td></tr>
                 <tr><td>Escalera (5 dados)</td><td>500</td></tr>
                 <tr><td>Full (3 + 2 iguales)</td><td>600</td></tr>
                 <tr><td>Póker (4 iguales + 1)</td><td>700</td></tr>
@@ -232,8 +336,10 @@
             </table>
             <p>En cada tirada tenés que apartar al menos un dado con puntos (para seguir lanzando o para plantarte). Si en una tirada no sale nada, perdés los puntos del turno.
             Si apartás los 5 dados, son <b>dados calientes</b> y volvés a lanzar los 5.</p>
-            <p><b>Las combinaciones son obligatorias:</b> si sale una pierna (3 iguales), escalera, full, póker o generala, tenés que usarla entera.
+            <p><b>Las combinaciones son obligatorias:</b> si sale una pierna, escalera, full o póker, tenés que usarla entera.
             Los 1 y 5 sueltos sí los podés elegir: por ejemplo, con 1-5-5 podés quedarte solo con el 1.</p>
+            <p><b>🍑 CULO:</b> en cualquier tirada podés tocar CULO para leer la cara de abajo de los dados que acabás de tirar (1↔6, 2↔5, 3↔4).
+            Solo perdés el turno si no te sirve ni la cara de arriba ni la de abajo.</p>
             <p>Para empezar a sumar necesitás <b id="reglaAbrir">750</b> puntos en un solo turno.
             Gana quien llega a <b id="reglaGanar">3000</b> exactos, o quien saca <b>generala</b>.
             Si los puntos de la mesa (sumados a los que ya tenés) te pasan de la meta, perdés el turno y te quedás con lo que tenías al empezarlo.</p>
@@ -245,7 +351,6 @@
     <script>
         const { calcularPuntuacion, dadosInutiles } = window.Puntuacion;
         const NUM_DADOS = 5;
-        const ASPECT_RATIO = 0.45;
 
         const $ = id => document.getElementById(id);
         const ui = {
@@ -262,13 +367,15 @@
             textoFin: $('textoFin'),
             revanchaBtn: $('revanchaBtn'),
             canvas: $('gameCanvas'),
-            ctx: $('gameCanvas').getContext('2d'),
+            culoBtn: $('culoBtn'),
             lanzarBtn: $('lanzarBtn'),
             plantarseBtn: $('plantarseBtn'),
             saltarBtn: $('saltarBtn'),
+            sonidoBtn: $('sonidoBtn'),
             textoPuntuacion: $('textoPuntuacion'),
             ayudaSeleccion: $('ayudaSeleccion'),
-            infoTurno: $('infoTurno'),
+            textoTurno: $('textoTurno'),
+            insigniaCulo: $('insigniaCulo'),
             listaPuntuaciones: $('listaPuntuaciones'),
             avisos: $('avisos')
         };
@@ -292,11 +399,9 @@
         let estado = null;
         let ultimoAvisoId = null;
         let ultimaTirada = null;
+        let ultimoVolteo = null;
+        let dadosPrevios = [];
         let eraMiTurno = false;
-
-        // Animación de tirada
-        let dadosMostrados = [];
-        let animando = false;
 
         ui.nombreInput.value = leer('dados_nombre') || '';
         const codigoUrl = new URLSearchParams(location.search).get('sala');
@@ -312,9 +417,677 @@
             setTimeout(() => div.remove(), 4000);
         }
 
-        function vibrar(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+        function vibrar(patron) { try { navigator.vibrate && navigator.vibrate(patron); } catch (e) {} }
 
-        // --- Conexión ---
+        // ================= Sonido (sintetizado, sin archivos) =================
+        const Sonido = (() => {
+            let ctx = null, ruido = null;
+            let activo = leer('dados_sonido') !== '0';
+
+            function iniciar() {
+                if (!ctx) {
+                    const AC = window.AudioContext || window.webkitAudioContext;
+                    if (!AC) return;
+                    ctx = new AC();
+                    ruido = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.25), ctx.sampleRate);
+                    const datos = ruido.getChannelData(0);
+                    for (let i = 0; i < datos.length; i++) datos[i] = Math.random() * 2 - 1;
+                }
+                if (ctx.state === 'suspended') ctx.resume();
+            }
+            const listo = () => activo && ctx && ctx.state === 'running';
+
+            // Choque de dado contra la mesa: ráfaga de ruido filtrada.
+            function golpe(volumen = 1, tono = 1) {
+                if (!listo()) return;
+                const t = ctx.currentTime;
+                const fuente = ctx.createBufferSource();
+                fuente.buffer = ruido;
+                const filtro = ctx.createBiquadFilter();
+                filtro.type = 'bandpass';
+                filtro.frequency.value = (1600 + Math.random() * 1600) * tono;
+                filtro.Q.value = 4;
+                const g = ctx.createGain();
+                g.gain.setValueAtTime(0.55 * volumen, t);
+                g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+                fuente.connect(filtro).connect(g).connect(ctx.destination);
+                fuente.start(t);
+                fuente.stop(t + 0.09);
+            }
+
+            function nota(frecuencia, inicio, duracion, tipo = 'triangle', volumen = 0.16) {
+                if (!listo()) return;
+                const t = ctx.currentTime + inicio;
+                const o = ctx.createOscillator();
+                o.type = tipo;
+                o.frequency.value = frecuencia;
+                const g = ctx.createGain();
+                g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(volumen, t + 0.015);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + duracion);
+                o.connect(g).connect(ctx.destination);
+                o.start(t);
+                o.stop(t + duracion + 0.05);
+            }
+
+            function deslizar(desde, hasta, duracion, tipo, volumen) {
+                if (!listo()) return;
+                const t = ctx.currentTime;
+                const o = ctx.createOscillator();
+                o.type = tipo;
+                o.frequency.setValueAtTime(desde, t);
+                o.frequency.exponentialRampToValueAtTime(hasta, t + duracion);
+                const g = ctx.createGain();
+                g.gain.setValueAtTime(volumen, t);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + duracion);
+                o.connect(g).connect(ctx.destination);
+                o.start(t);
+                o.stop(t + duracion + 0.05);
+            }
+
+            return {
+                iniciar,
+                golpe,
+                get activo() { return activo; },
+                alternar() {
+                    activo = !activo;
+                    guardar('dados_sonido', activo ? '1' : '0');
+                    if (activo) iniciar();
+                    return activo;
+                },
+                cubilete() { for (let i = 0; i < 4; i++) setTimeout(() => golpe(0.35, 0.7), i * 45); },
+                combo(nivel) {
+                    [523.25, 659.25, 783.99, 1046.5, 1318.5, 1568].slice(0, 3 + nivel)
+                        .forEach((f, i) => nota(f, i * 0.07, 0.4));
+                },
+                gran() {
+                    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => nota(f, i * 0.11, 0.3, 'square', 0.08));
+                    [1046.5, 1318.5, 1568].forEach(f => nota(f, 0.48, 1.1, 'triangle', 0.12));
+                },
+                perder() { deslizar(330, 70, 0.7, 'sawtooth', 0.1); },
+                culo() { deslizar(720, 150, 0.32, 'sine', 0.28); nota(1200, 0.3, 0.12, 'sine', 0.1); },
+                plantarse() { [988, 1319].forEach((f, i) => nota(f, i * 0.09, 0.35, 'square', 0.06)); },
+                turno() { nota(880, 0, 0.18, 'sine', 0.14); nota(1318.5, 0.12, 0.3, 'sine', 0.14); },
+                tic() { nota(1600, 0, 0.04, 'square', 0.035); }
+            };
+        })();
+        document.addEventListener('pointerdown', () => Sonido.iniciar(), { passive: true });
+
+        // ================= Mesa: dibujo, físicas y efectos =================
+        const Mesa = (() => {
+            const canvas = ui.canvas;
+            const ctx = canvas.getContext('2d');
+            let W = 0, H = 0, dpr = 1;
+            let fondoVerde = null, fondoCulo = null;
+            let mezclaCulo = 0;
+            const dados = Array.from({ length: NUM_DADOS }, () => ({
+                x: 0, y: 0, s: 0, z: 0, rot: 0, escalaX: 1, valor: 1, visible: true, anim: null
+            }));
+            let particulas = [];
+            let banners = [];
+            const destello = { r: 255, g: 255, b: 255, a: 0 };
+            let sacudida = 0;
+            let tension = 0;
+            let dadoUltimo = -1;
+            let alTerminar = null;
+            let ultimoT = performance.now();
+
+            const aleatorio = (a, b) => a + Math.random() * (b - a);
+            const facil = p => 1 - Math.pow(1 - p, 3);
+            const rebote = p => { const c = 1.70158 + 1; return 1 + c * Math.pow(p - 1, 3) + 1.70158 * Math.pow(p - 1, 2); };
+
+            function redimensionar() {
+                const ancho = canvas.clientWidth;
+                const nuevoDpr = Math.min(window.devicePixelRatio || 1, 2.5);
+                if (!ancho) return;
+                if (ancho === W && nuevoDpr === dpr && fondoVerde) return;
+                dpr = nuevoDpr;
+                W = ancho;
+                H = Math.round(W * 0.68);
+                canvas.style.height = H + 'px';
+                canvas.width = Math.round(W * dpr);
+                canvas.height = Math.round(H * dpr);
+                fondoVerde = crearFondo(['#35b067', '#187a43', '#083a20']);
+                fondoCulo = crearFondo(['#b65ae0', '#6a238f', '#280a3b']);
+                colocarSinAnimar();
+            }
+
+            // Paño de la mesa: degradado, textura de fibra, línea decorativa y viñeta.
+            function crearFondo(colores) {
+                const c = document.createElement('canvas');
+                c.width = Math.round(W * dpr);
+                c.height = Math.round(H * dpr);
+                const g = c.getContext('2d');
+                g.scale(dpr, dpr);
+                const radial = g.createRadialGradient(W / 2, H * 0.6, 10, W / 2, H * 0.6, Math.max(W, H) * 0.8);
+                radial.addColorStop(0, colores[0]);
+                radial.addColorStop(0.55, colores[1]);
+                radial.addColorStop(1, colores[2]);
+                g.fillStyle = radial;
+                g.fillRect(0, 0, W, H);
+
+                const img = g.getImageData(0, 0, c.width, c.height);
+                for (let i = 0; i < img.data.length; i += 4) {
+                    const n = (Math.random() - 0.5) * 16;
+                    img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n;
+                }
+                g.putImageData(img, 0, 0);
+
+                g.strokeStyle = 'rgba(255,255,255,0.10)';
+                g.lineWidth = 2;
+                g.setLineDash([7, 9]);
+                g.beginPath();
+                g.roundRect(10, 10, W - 20, H - 20, 14);
+                g.stroke();
+                g.setLineDash([]);
+
+                const vineta = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.75);
+                vineta.addColorStop(0, 'rgba(0,0,0,0)');
+                vineta.addColorStop(1, 'rgba(0,0,0,0.55)');
+                g.fillStyle = vineta;
+                g.fillRect(0, 0, W, H);
+                return c;
+            }
+
+            function medidas() {
+                const s = Math.min(W / 6.4, H * 0.32);
+                const gap = s * 0.24;
+                const r = s * 0.5;
+                return {
+                    s, gap, r,
+                    x0: (W - (5 * s + 4 * gap)) / 2 + s / 2,
+                    yMesa: H * 0.66,
+                    xBandeja: 18 + r / 2,
+                    yBandeja: 18 + r / 2,
+                    gapBandeja: r * 0.3
+                };
+            }
+
+            // Dónde debería estar cada dado: los apartados van a la bandeja de arriba.
+            function objetivo(i) {
+                const m = medidas();
+                if (estado.fijos[i]) {
+                    let k = 0;
+                    for (let j = 0; j < i; j++) if (estado.fijos[j]) k++;
+                    return { x: m.xBandeja + k * (m.r + m.gapBandeja), y: m.yBandeja, s: m.r, z: 0 };
+                }
+                const sel = estado.sel[i];
+                return { x: m.x0 + i * (m.s + m.gap), y: m.yMesa - (sel ? m.s * 0.1 : 0), s: m.s, z: sel ? 0.14 : 0 };
+            }
+
+            function colocarSinAnimar() {
+                if (!estado || !estado.dados.length) return;
+                dados.forEach((d, i) => {
+                    const t = objetivo(i);
+                    Object.assign(d, { x: t.x, y: t.y, s: t.s, z: t.z, rot: 0, escalaX: 1, visible: true, anim: null, valor: estado.dados[i] });
+                });
+            }
+
+            function tirar(alFin) {
+                const m = medidas();
+                const ahora = performance.now();
+                const libres = [];
+                for (let i = 0; i < NUM_DADOS; i++) if (!estado.fijos[i]) libres.push(i);
+                const orden = libres.slice().sort(() => Math.random() - 0.5);
+                dadoUltimo = orden.length > 1 ? orden[orden.length - 1] : -1;
+                orden.forEach((i, k) => {
+                    const t = objetivo(i);
+                    const ultimo = i === dadoUltimo;
+                    dados[i].anim = {
+                        tipo: 'tirada',
+                        t0: ahora + k * 70,
+                        dur: 760 + k * 90 + (ultimo ? 700 : 0),
+                        sx: W / 2 + aleatorio(-0.35, 0.35) * W,
+                        sy: H + m.s * 1.3,
+                        ex: t.x,
+                        ey: t.y,
+                        giro: (Math.random() < 0.5 ? -1 : 1) * Math.PI * aleatorio(3, 6),
+                        final: estado.dados[i],
+                        impactos: 0,
+                        proximoCambio: 0
+                    };
+                    dados[i].visible = false;
+                });
+                alTerminar = alFin;
+                Sonido.cubilete();
+            }
+
+            // CULO: cada dado libre gira sobre sí mismo y muestra la contracara.
+            function voltear(viejos) {
+                const ahora = performance.now();
+                let k = 0;
+                dados.forEach((d, i) => {
+                    if (estado.fijos[i]) return;
+                    d.anim = { tipo: 'volteo', t0: ahora + k * 50, dur: 360, viejo: viejos[i], nuevo: estado.dados[i] };
+                    chispas(d.x, d.y, 12, '230,130,255', 170);
+                    k++;
+                });
+                Sonido.culo();
+                destello.r = 217; destello.g = 75; destello.b = 255; destello.a = 0.3;
+                if (estado.culo) banner('🍑 DE CULO', ['#ffe3ff', '#d94bff'], 1300, 1);
+            }
+
+            function animando() { return dados.some(d => d.anim && d.anim.tipo === 'tirada'); }
+
+            // ---------- Partículas ----------
+            function agregar(n, crear) { for (let i = 0; i < n; i++) particulas.push(crear()); }
+            function polvo(x, y, n) {
+                agregar(Math.round(n), () => ({
+                    tipo: 'polvo', x, y, vx: aleatorio(-70, 70), vy: aleatorio(-30, 10), g: 30, roce: 0.9,
+                    vida: 0, max: aleatorio(0.35, 0.6), tam: aleatorio(1.5, 3.5), color: '255,255,255'
+                }));
+            }
+            function chispas(x, y, n, color = '255,214,100', velocidad = 260) {
+                agregar(n, () => {
+                    const ang = Math.random() * Math.PI * 2, v = velocidad * aleatorio(0.3, 1);
+                    return {
+                        tipo: 'chispa', x, y, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v, g: 160, roce: 0.94,
+                        vida: 0, max: aleatorio(0.5, 1.1), tam: aleatorio(1.5, 3.2), color
+                    };
+                });
+            }
+            function brasas(n) {
+                agregar(n, () => ({
+                    tipo: 'chispa', x: aleatorio(0, W), y: H + 10, vx: aleatorio(-30, 30), vy: aleatorio(-260, -120), g: -20, roce: 0.99,
+                    vida: 0, max: aleatorio(0.9, 1.6), tam: aleatorio(2, 4.5), color: Math.random() < 0.5 ? '255,140,40' : '255,200,80'
+                }));
+            }
+            function confeti(n) {
+                const colores = ['#f5c542', '#ff4d6d', '#2ee08a', '#4dabff', '#d94bff', '#ffffff'];
+                agregar(n, () => ({
+                    tipo: 'confeti', x: aleatorio(0, W), y: aleatorio(-H * 0.6, -10), vx: aleatorio(-40, 40), vy: aleatorio(60, 180), g: 120, roce: 0.985,
+                    vida: 0, max: aleatorio(2.2, 3.4), tam: aleatorio(5, 9), color: colores[Math.floor(Math.random() * colores.length)],
+                    rot: aleatorio(0, Math.PI), vr: aleatorio(-8, 8)
+                }));
+            }
+
+            function banner(texto, colores, dur = 1500, tam = 1) {
+                banners.push({ texto, colores, t0: performance.now(), dur, tam });
+            }
+            function flash(r, g, b, a) { Object.assign(destello, { r, g, b, a }); }
+            function sacudir(fuerza) { sacudida = Math.max(sacudida, fuerza); }
+            function centro(i) { return dados[i]; }
+
+            // ---------- Actualización por cuadro ----------
+            function actualizar(dt, ahora) {
+                let quedan = 0;
+                dados.forEach((d, i) => {
+                    const a = d.anim;
+                    if (a && a.tipo === 'tirada') {
+                        if (ahora < a.t0) { d.visible = false; quedan++; return; }
+                        d.visible = true;
+                        const p = Math.min(1, (ahora - a.t0) / a.dur);
+                        const e = facil(p);
+                        d.x = a.sx + (a.ex - a.sx) * e;
+                        d.y = a.sy + (a.ey - a.sy) * e;
+                        d.s = medidas().s;
+                        // Altura: tres rebotes cada vez más bajos.
+                        d.z = Math.abs(Math.cos(p * Math.PI * 3)) * Math.pow(1 - p, 2) * 1.15;
+                        d.rot = a.giro * (1 - e);
+                        const impactos = Math.floor(p * 3 + 0.5);
+                        while (a.impactos < impactos) {
+                            a.impactos++;
+                            const fuerza = 1 / a.impactos;
+                            Sonido.golpe(fuerza, aleatorio(0.9, 1.2));
+                            polvo(d.x, d.y + d.s * 0.35, 7 * fuerza);
+                            if (a.impactos === 1) sacudir(2.5);
+                        }
+                        if (p < 0.8) {
+                            if (ahora > a.proximoCambio) {
+                                d.valor = 1 + Math.floor(Math.random() * 6);
+                                a.proximoCambio = ahora + 55 + p * 140;
+                            }
+                        } else {
+                            d.valor = a.final;
+                        }
+                        if (p >= 1) {
+                            d.anim = null;
+                            d.z = 0;
+                            d.rot = 0;
+                        } else {
+                            quedan++;
+                        }
+                        return;
+                    }
+
+                    if (a && a.tipo === 'volteo') {
+                        const p = Math.max(0, Math.min(1, (ahora - a.t0) / a.dur));
+                        d.escalaX = Math.max(0.04, Math.abs(Math.cos(p * Math.PI)));
+                        d.valor = p < 0.5 ? a.viejo : a.nuevo;
+                        if (p >= 1) { d.anim = null; d.escalaX = 1; }
+                    } else {
+                        d.valor = estado.dados[i];
+                    }
+
+                    // Resorte suave hacia su lugar (apartar, seleccionar, etc.).
+                    const t = objetivo(i);
+                    const k = 1 - Math.exp(-dt * 14);
+                    d.x += (t.x - d.x) * k;
+                    d.y += (t.y - d.y) * k;
+                    d.s += (t.s - d.s) * k;
+                    d.z += (t.z - d.z) * k;
+                    d.visible = true;
+                });
+
+                // Cámara lenta / tensión mientras cae el último dado.
+                const soloFaltaElUltimo = quedan === 1 && dadoUltimo >= 0 && dados[dadoUltimo].anim;
+                tension += ((soloFaltaElUltimo ? 1 : 0) - tension) * (1 - Math.exp(-dt * 6));
+                if (quedan === 0 && alTerminar) {
+                    const fn = alTerminar;
+                    alTerminar = null;
+                    dadoUltimo = -1;
+                    fn();
+                }
+
+                mezclaCulo += ((estado.culo ? 1 : 0) - mezclaCulo) * (1 - Math.exp(-dt * 5));
+                sacudida *= Math.exp(-dt * 9);
+                destello.a *= Math.exp(-dt * 3.5);
+
+                particulas = particulas.filter(p => {
+                    p.vida += dt;
+                    p.vx *= Math.pow(p.roce, dt * 60);
+                    p.vy = p.vy * Math.pow(p.roce, dt * 60) + p.g * dt;
+                    p.x += p.vx * dt;
+                    p.y += p.vy * dt;
+                    if (p.vr) p.rot += p.vr * dt;
+                    return p.vida < p.max;
+                });
+                banners = banners.filter(b => ahora - b.t0 < b.dur);
+            }
+
+            // ---------- Dibujo ----------
+            function dibujarDado(d, i, ahora) {
+                if (!d.visible) return;
+                const fijo = estado.fijos[i];
+                const sel = !fijo && estado.sel[i] && !d.anim;
+                const obligatorio = sel && estado.obligatorios.includes(i);
+                const deCulo = estado.culo && !fijo;
+                const perdido = estado.enBust && !d.anim;
+                const s = d.s * (1 + d.z * 0.5);
+                const radio = s * 0.2;
+
+                ctx.save();
+                ctx.translate(d.x, d.y);
+                ctx.rotate(d.rot);
+                ctx.scale(d.escalaX, 1);
+
+                // Sombra proyectada: crece y se aleja con la altura.
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = (5 + d.z * 40) * dpr;
+                ctx.shadowOffsetX = (2 + d.z * 16) * dpr;
+                ctx.shadowOffsetY = (4 + d.z * 30) * dpr;
+                if (sel) {
+                    const pulso = 0.55 + 0.45 * Math.sin(ahora / 170);
+                    ctx.shadowColor = obligatorio ? `rgba(255,130,60,${pulso})` : `rgba(255,214,90,${pulso})`;
+                    ctx.shadowBlur = 28 * dpr;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                }
+
+                // Cuerpo de resina color marfil (lavanda en modo culo).
+                const cuerpo = ctx.createLinearGradient(-s / 2, -s / 2, s / 2, s / 2);
+                const tonos = deCulo ? ['#fdf3ff', '#ecd3fb', '#c9a0e8'] : ['#fffdf6', '#f1e9d6', '#d6cab0'];
+                cuerpo.addColorStop(0, tonos[0]);
+                cuerpo.addColorStop(0.55, tonos[1]);
+                cuerpo.addColorStop(1, tonos[2]);
+                ctx.fillStyle = cuerpo;
+                ctx.beginPath();
+                ctx.roundRect(-s / 2, -s / 2, s, s, radio);
+                ctx.fill();
+                ctx.shadowColor = 'transparent';
+
+                // Bisel: luz arriba a la izquierda, sombra abajo a la derecha.
+                const bisel = ctx.createLinearGradient(-s / 2, -s / 2, s / 2, s / 2);
+                bisel.addColorStop(0, 'rgba(255,255,255,0.95)');
+                bisel.addColorStop(1, 'rgba(90,70,40,0.55)');
+                ctx.lineWidth = s * 0.04;
+                ctx.strokeStyle = bisel;
+                ctx.beginPath();
+                ctx.roundRect(-s / 2 + s * 0.02, -s / 2 + s * 0.02, s * 0.96, s * 0.96, radio * 0.9);
+                ctx.stroke();
+
+                // Brillo especular.
+                ctx.save();
+                ctx.beginPath();
+                ctx.roundRect(-s / 2, -s / 2, s, s, radio);
+                ctx.clip();
+                const brillo = ctx.createRadialGradient(-s * 0.25, -s * 0.3, 0, -s * 0.25, -s * 0.3, s * 0.55);
+                brillo.addColorStop(0, 'rgba(255,255,255,0.65)');
+                brillo.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.fillStyle = brillo;
+                ctx.fillRect(-s / 2, -s / 2, s, s);
+                ctx.restore();
+
+                if (sel) {
+                    ctx.lineWidth = s * 0.075;
+                    ctx.strokeStyle = obligatorio ? '#ff8a3d' : '#f5c542';
+                    ctx.beginPath();
+                    ctx.roundRect(-s / 2, -s / 2, s, s, radio);
+                    ctx.stroke();
+                }
+
+                dibujarPuntos(d.valor, s);
+
+                if (obligatorio) {
+                    ctx.font = `${s * 0.26}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🔒', s * 0.36, -s * 0.36);
+                }
+                if (perdido) {
+                    ctx.fillStyle = 'rgba(30,30,30,0.5)';
+                    ctx.beginPath();
+                    ctx.roundRect(-s / 2, -s / 2, s, s, radio);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            // Puntos tallados: rojos para el 1 y el 4, negros para el resto.
+            function dibujarPuntos(valor, s) {
+                const p = s / 4;
+                const r = s / 9.5;
+                const pos = {
+                    c: [0, 0], ia: [-p, -p], im: [-p, 0], ib: [-p, p], da: [p, -p], dm: [p, 0], db: [p, p]
+                };
+                const caras = {
+                    1: ['c'], 2: ['ia', 'db'], 3: ['ia', 'c', 'db'], 4: ['ia', 'da', 'ib', 'db'],
+                    5: ['ia', 'da', 'c', 'ib', 'db'], 6: ['ia', 'da', 'im', 'dm', 'ib', 'db']
+                };
+                const rojo = valor === 1 || valor === 4;
+                const radioPunto = valor === 1 ? r * 1.45 : r;
+                (caras[valor] || []).forEach(clave => {
+                    const [x, y] = pos[clave];
+                    const g = ctx.createRadialGradient(x - radioPunto * 0.3, y - radioPunto * 0.3, 0, x, y, radioPunto);
+                    if (rojo) { g.addColorStop(0, '#7a0000'); g.addColorStop(1, '#e53935'); }
+                    else { g.addColorStop(0, '#000000'); g.addColorStop(1, '#3d3d3d'); }
+                    ctx.fillStyle = g;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radioPunto, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                    ctx.beginPath();
+                    ctx.arc(x + radioPunto * 0.35, y + radioPunto * 0.4, radioPunto * 0.28, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            function dibujarParticulas() {
+                particulas.forEach(p => {
+                    const vida = 1 - p.vida / p.max;
+                    if (p.tipo === 'confeti') {
+                        ctx.save();
+                        ctx.translate(p.x, p.y);
+                        ctx.rotate(p.rot);
+                        ctx.globalAlpha = Math.min(1, vida * 2);
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(-p.tam / 2, -p.tam / 4, p.tam, p.tam / 2);
+                        ctx.restore();
+                    } else if (p.tipo === 'chispa') {
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'lighter';
+                        ctx.strokeStyle = `rgba(${p.color},${vida})`;
+                        ctx.lineWidth = p.tam;
+                        ctx.lineCap = 'round';
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p.x - p.vx * 0.035, p.y - p.vy * 0.035);
+                        ctx.stroke();
+                        ctx.restore();
+                    } else {
+                        ctx.fillStyle = `rgba(${p.color},${vida * 0.5})`;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.tam, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
+
+            function dibujarBanners(ahora) {
+                banners.forEach((b, n) => {
+                    const t = (ahora - b.t0) / b.dur;
+                    const escala = t < 0.18 ? rebote(t / 0.18) : 1;
+                    const alfa = t > 0.75 ? 1 - (t - 0.75) / 0.25 : 1;
+                    let tam = (W / 9) * b.tam;
+                    ctx.save();
+                    ctx.font = `${tam}px Bungee, Rubik, sans-serif`;
+                    const ancho = ctx.measureText(b.texto).width;
+                    if (ancho > W * 0.9) { tam *= (W * 0.9) / ancho; ctx.font = `${tam}px Bungee, Rubik, sans-serif`; }
+                    ctx.translate(W / 2, H * 0.33 + n * tam * 1.15);
+                    ctx.scale(escala, escala);
+                    ctx.globalAlpha = Math.max(0, alfa);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.lineJoin = 'round';
+                    ctx.lineWidth = tam * 0.16;
+                    ctx.strokeStyle = 'rgba(20,10,0,0.75)';
+                    ctx.strokeText(b.texto, 0, 0);
+                    const g = ctx.createLinearGradient(0, -tam / 2, 0, tam / 2);
+                    g.addColorStop(0, b.colores[0]);
+                    g.addColorStop(1, b.colores[1]);
+                    ctx.shadowColor = b.colores[1];
+                    ctx.shadowBlur = 22 * dpr;
+                    ctx.fillStyle = g;
+                    ctx.fillText(b.texto, 0, 0);
+                    ctx.restore();
+                });
+            }
+
+            function dibujar(ahora) {
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctx.clearRect(0, 0, W, H);
+                ctx.save();
+                if (sacudida > 0.2) ctx.translate(aleatorio(-1, 1) * sacudida, aleatorio(-1, 1) * sacudida);
+                if (tension > 0.01 && dadoUltimo >= 0) {
+                    const d = dados[dadoUltimo];
+                    const zoom = 1 + 0.08 * tension;
+                    ctx.translate(d.x, d.y);
+                    ctx.scale(zoom, zoom);
+                    ctx.translate(-d.x, -d.y);
+                }
+
+                ctx.drawImage(fondoVerde, 0, 0, W, H);
+                if (mezclaCulo > 0.01) {
+                    ctx.globalAlpha = mezclaCulo;
+                    ctx.drawImage(fondoCulo, 0, 0, W, H);
+                    ctx.globalAlpha = 1;
+                }
+
+                if (!estado.dados.length) {
+                    const j = estado.jugadores[estado.turno];
+                    let texto = '';
+                    if (estado.fase === 'jugando') texto = esMiTurno() ? '¡Lanzá los dados!' : `Esperando a ${j ? j.nombre : ''}…`;
+                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                    ctx.font = `${Math.max(15, W / 17)}px Bungee, Rubik, sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 8 * dpr;
+                    ctx.fillText(texto, W / 2, H / 2);
+                    ctx.shadowColor = 'transparent';
+                } else {
+                    // Bandeja de dados apartados.
+                    const apartados = estado.fijos.filter(Boolean).length;
+                    if (apartados) {
+                        const m = medidas();
+                        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                        ctx.beginPath();
+                        ctx.roundRect(8, 8, apartados * (m.r + m.gapBandeja) + 20 - m.gapBandeja, m.r + 20, 12);
+                        ctx.fill();
+                    }
+                    const orden = [0, 1, 2, 3, 4].sort((a, b) => dados[a].z - dados[b].z);
+                    orden.forEach(i => dibujarDado(dados[i], i, ahora));
+                }
+
+                if (tension > 0.01) {
+                    const v = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.2, W / 2, H / 2, Math.max(W, H) * 0.7);
+                    v.addColorStop(0, 'rgba(0,0,0,0)');
+                    v.addColorStop(1, `rgba(0,0,0,${0.55 * tension})`);
+                    ctx.fillStyle = v;
+                    ctx.fillRect(-W, -H, W * 3, H * 3);
+                }
+
+                dibujarParticulas();
+                ctx.restore();
+
+                if (estado.culo && estado.dados.length) {
+                    const pulso = 0.75 + 0.25 * Math.sin(ahora / 200);
+                    const tam = Math.max(11, W / 30);
+                    ctx.font = `${tam}px Bungee, Rubik, sans-serif`;
+                    const texto = '🍑 DE CULO';
+                    const ancho = ctx.measureText(texto).width + tam * 1.4;
+                    ctx.globalAlpha = pulso;
+                    ctx.fillStyle = '#c03be6';
+                    ctx.shadowColor = '#d94bff';
+                    ctx.shadowBlur = 16 * dpr;
+                    ctx.beginPath();
+                    ctx.roundRect(W - ancho - 12, 12, ancho, tam * 2, tam);
+                    ctx.fill();
+                    ctx.shadowColor = 'transparent';
+                    ctx.fillStyle = '#fff';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(texto, W - ancho / 2 - 12, 12 + tam);
+                    ctx.globalAlpha = 1;
+                }
+
+                dibujarBanners(ahora);
+
+                if (destello.a > 0.01) {
+                    ctx.fillStyle = `rgba(${destello.r},${destello.g},${destello.b},${destello.a})`;
+                    ctx.fillRect(0, 0, W, H);
+                }
+            }
+
+            function cuadro(ahora) {
+                const dt = Math.min(0.05, (ahora - ultimoT) / 1000);
+                ultimoT = ahora;
+                if (estado && W && !ui.pantallaSala.classList.contains('oculto') && !ui.juego.classList.contains('oculto')) {
+                    actualizar(dt, ahora);
+                    dibujar(ahora);
+                }
+                requestAnimationFrame(cuadro);
+            }
+            requestAnimationFrame(cuadro);
+
+            function dadoEn(px, py) {
+                for (let i = 0; i < NUM_DADOS; i++) {
+                    if (estado.fijos[i]) continue;
+                    const d = dados[i];
+                    const margen = d.s * 0.62;
+                    if (Math.abs(px - d.x) <= margen && Math.abs(py - d.y) <= margen) return i;
+                }
+                return -1;
+            }
+
+            return {
+                redimensionar, colocarSinAnimar, tirar, voltear, animando, dadoEn, centro,
+                chispas, brasas, confeti, banner, flash, sacudir,
+                get W() { return W; }, get H() { return H; }
+            };
+        })();
+
+        // ================= Conexión =================
         const socket = io();
 
         function alResponder(res) {
@@ -342,8 +1115,7 @@
             return nombre;
         }
 
-        ui.crearBtn = $('crearBtn');
-        ui.crearBtn.addEventListener('click', () => {
+        $('crearBtn').addEventListener('click', () => {
             const nombre = pedirNombre();
             if (!nombre) return;
             socket.emit('crear', { nombre, jugadorId }, res => {
@@ -389,42 +1161,119 @@
             const primerEstado = !estado;
             estado = nuevo;
 
-            if (estado.aviso && estado.aviso.id !== ultimoAvisoId) {
-                if (!primerEstado) mostrarAviso(estado.aviso.texto, estado.aviso.tipo);
-                ultimoAvisoId = estado.aviso.id;
-            }
+            const avisoNuevo = estado.aviso && estado.aviso.id !== ultimoAvisoId ? estado.aviso : null;
+            if (avisoNuevo) ultimoAvisoId = avisoNuevo.id;
 
-            if (estado.tirada !== ultimaTirada) {
-                if (!primerEstado && estado.dados.length > 0) animarTirada();
-                ultimaTirada = estado.tirada;
+            const huboTirada = estado.tirada !== ultimaTirada;
+            const huboVolteo = estado.volteo !== ultimoVolteo;
+            ultimaTirada = estado.tirada;
+            ultimoVolteo = estado.volteo;
+
+            if (primerEstado) {
+                Mesa.redimensionar();
+            } else if (huboTirada && estado.dados.length > 0) {
+                // El aviso y los efectos esperan a que los dados terminen de rodar.
+                const foto = JSON.parse(JSON.stringify(estado));
+                Mesa.tirar(() => {
+                    if (avisoNuevo) mostrarAviso(avisoNuevo.texto, avisoNuevo.tipo);
+                    efectosTirada(foto, avisoNuevo);
+                    render();
+                });
+            } else {
+                if (huboVolteo && estado.dados.length > 0) Mesa.voltear(dadosPrevios);
+                if (avisoNuevo) {
+                    mostrarAviso(avisoNuevo.texto, avisoNuevo.tipo);
+                    efectosAviso(avisoNuevo);
+                }
             }
+            dadosPrevios = estado.dados.slice();
 
             const miTurno = esMiTurno();
-            if (miTurno && !eraMiTurno && !primerEstado) vibrar(200);
+            if (miTurno && !eraMiTurno && !primerEstado) { vibrar(200); Sonido.turno(); }
             eraMiTurno = miTurno;
 
             render();
         });
 
-        // --- Ayudantes de estado ---
+        // ================= Efectos según lo que pasó =================
+        function efectosTirada(e, aviso) {
+            const texto = aviso ? aviso.texto : '';
+            const libres = [0, 1, 2, 3, 4].filter(i => !e.fijos[i]);
+
+            if (e.fase === 'fin' && /GENERALA/.test(texto)) {
+                Mesa.banner('¡GENERALA!', ['#fff6c8', '#f5c542'], 3000, 1.25);
+                Mesa.confeti(180);
+                Mesa.flash(255, 215, 90, 0.6);
+                Mesa.sacudir(8);
+                libres.forEach(i => Mesa.chispas(Mesa.centro(i).x, Mesa.centro(i).y, 40));
+                Sonido.gran();
+                vibrar([80, 40, 80, 40, 250]);
+                return;
+            }
+            if (e.enBust) {
+                const pasado = /se pasó/.test(texto);
+                Mesa.banner(pasado ? '¡TE PASASTE!' : '¡SIN JUEGO!', ['#ffd6d6', '#ff4d4d'], 2200, 1.05);
+                Mesa.flash(255, 40, 40, 0.35);
+                Mesa.sacudir(11);
+                Sonido.perder();
+                vibrar(300);
+                return;
+            }
+            const calientes = /calientes/.test(texto);
+            if (e.jugadaObligatoria) {
+                const nombre = e.jugadaObligatoria;
+                const nivel = nombre === 'Póker' ? 3 : (nombre === 'Escalera' || nombre === 'Full' || nombre === 'Pierna de 1') ? 2 : 1;
+                Mesa.banner(nombre.toUpperCase(), ['#fff3c4', '#f5c542'], 1600, nivel >= 2 ? 1 : 0.85);
+                e.obligatorios.forEach(i => Mesa.chispas(Mesa.centro(i).x, Mesa.centro(i).y, 14 * nivel));
+                Mesa.flash(255, 225, 130, 0.1 * nivel);
+                if (nivel >= 2) Mesa.sacudir(3 * nivel);
+                Sonido.combo(nivel);
+                vibrar(40 * nivel);
+            } else {
+                libres.filter(i => e.dados[i] === 1 || e.dados[i] === 5)
+                    .forEach(i => Mesa.chispas(Mesa.centro(i).x, Mesa.centro(i).y, 6, '255,240,190', 120));
+            }
+            if (calientes) {
+                Mesa.banner('🔥 DADOS CALIENTES', ['#ffe3a3', '#ff7a1a'], 1900, 0.8);
+                Mesa.brasas(70);
+            }
+        }
+
+        function efectosAviso(aviso) {
+            if (/ganó con/.test(aviso.texto)) {
+                Mesa.banner('¡VICTORIA!', ['#fff6c8', '#f5c542'], 3000, 1.2);
+                Mesa.confeti(160);
+                Mesa.flash(255, 215, 90, 0.5);
+                Sonido.gran();
+                vibrar([80, 40, 80, 40, 250]);
+            } else if (/se planta|abrió/.test(aviso.texto)) {
+                Sonido.plantarse();
+            } else if (/necesitaba/.test(aviso.texto)) {
+                Sonido.perder();
+            }
+        }
+
+        // ================= Ayudantes de estado =================
         function jugadorDeTurno() { return estado && estado.jugadores[estado.turno]; }
         function esMiTurno() {
             return !!estado && estado.fase === 'jugando' && !estado.enBust && jugadorDeTurno()?.id === jugadorId;
         }
         function soyAnfitrion() { return !!estado && estado.anfitrionId === jugadorId; }
-        function seleccionActual() {
-            return estado.dados.filter((_, i) => estado.sel[i] && !estado.fijos[i]);
-        }
+        function seleccionActual() { return estado.dados.filter((_, i) => estado.sel[i] && !estado.fijos[i]); }
+        function puntosEnMesa() { return calcularPuntuacion(estado.dados.filter((_, i) => !estado.fijos[i])); }
 
-        // --- Botones ---
+        // ================= Botones =================
         ui.lanzarBtn.addEventListener('click', () => { vibrar(30); socket.emit('lanzar', alResponder); });
         ui.plantarseBtn.addEventListener('click', () => socket.emit('plantarse', alResponder));
+        ui.culoBtn.addEventListener('click', () => { vibrar(25); socket.emit('culo', alResponder); });
         ui.empezarBtn.addEventListener('click', () => socket.emit('empezar', alResponder));
         ui.revanchaBtn.addEventListener('click', () => socket.emit('empezar', alResponder));
         ui.saltarBtn.addEventListener('click', () => {
             const j = jugadorDeTurno();
             if (j && confirm(`¿Saltar el turno de ${j.nombre}?`)) socket.emit('saltarTurno', alResponder);
         });
+        ui.sonidoBtn.textContent = Sonido.activo ? '🔊' : '🔇';
+        ui.sonidoBtn.addEventListener('click', () => { ui.sonidoBtn.textContent = Sonido.alternar() ? '🔊' : '🔇'; });
         $('salirBtn').addEventListener('click', () => {
             if (!confirm('¿Salir de la partida? Perdés tu lugar y tus puntos.')) return;
             socket.emit('salir', () => salirDeSala());
@@ -443,165 +1292,88 @@
             }
         });
 
-        // --- Canvas ---
-        let anchoCanvas = 0, altoCanvas = 0;
-
-        function resizeCanvas() {
-            const dpr = window.devicePixelRatio || 1;
-            anchoCanvas = ui.canvas.clientWidth || 300;
-            altoCanvas = anchoCanvas * ASPECT_RATIO;
-            ui.canvas.style.height = altoCanvas + 'px';
-            ui.canvas.width = Math.round(anchoCanvas * dpr);
-            ui.canvas.height = Math.round(altoCanvas * dpr);
-            ui.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            redibujarDados();
-        }
-
-        function getDiceLayout() {
-            const tamanoDado = anchoCanvas / 6.5;
-            const espacioEntreDados = tamanoDado / 4;
-            const anchoTotalDados = (NUM_DADOS * tamanoDado) + ((NUM_DADOS - 1) * espacioEntreDados);
-            const startX = (anchoCanvas - anchoTotalDados) / 2;
-            const startY = (altoCanvas - tamanoDado) / 2;
-            return { tamanoDado, espacioEntreDados, startX, startY };
-        }
-
-        function dibujarCara(valor, x, y, tamanoDado, seleccionado, fijo) {
-            const ctx = ui.ctx;
-            ctx.fillStyle = fijo ? '#e0e0e0' : 'white';
-            ctx.strokeStyle = fijo ? '#666' : (seleccionado ? '#ffeb3b' : 'black');
-            ctx.lineWidth = seleccionado && !fijo ? tamanoDado * 0.08 : tamanoDado * 0.04;
-
-            ctx.beginPath();
-            if (ctx.roundRect) ctx.roundRect(x, y, tamanoDado, tamanoDado, tamanoDado * 0.15);
-            else ctx.rect(x, y, tamanoDado, tamanoDado);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.fillStyle = (valor === 1 || valor === 4) ? '#d32f2f' : 'black';
-            if (fijo) ctx.fillStyle = '#666';
-
-            const tamanoPunto = tamanoDado / 9;
-            const p = tamanoDado / 4;
-            const pos = {
-                centro: { x: x + tamanoDado / 2, y: y + tamanoDado / 2 },
-                izqArr: { x: x + p, y: y + p },
-                izqMed: { x: x + p, y: y + tamanoDado / 2 },
-                izqAba: { x: x + p, y: y + tamanoDado - p },
-                derArr: { x: x + tamanoDado - p, y: y + p },
-                derMed: { x: x + tamanoDado - p, y: y + tamanoDado / 2 },
-                derAba: { x: x + tamanoDado - p, y: y + tamanoDado - p }
-            };
-
-            function dibujarPunto(posicion) {
-                ctx.beginPath();
-                ctx.arc(posicion.x, posicion.y, tamanoPunto, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            if (valor === 1) { dibujarPunto(pos.centro); }
-            else if (valor === 2) { dibujarPunto(pos.izqArr); dibujarPunto(pos.derAba); }
-            else if (valor === 3) { dibujarPunto(pos.izqArr); dibujarPunto(pos.centro); dibujarPunto(pos.derAba); }
-            else if (valor === 4) { dibujarPunto(pos.izqArr); dibujarPunto(pos.derArr); dibujarPunto(pos.izqAba); dibujarPunto(pos.derAba); }
-            else if (valor === 5) { dibujarPunto(pos.izqArr); dibujarPunto(pos.derArr); dibujarPunto(pos.centro); dibujarPunto(pos.izqAba); dibujarPunto(pos.derAba); }
-            else if (valor === 6) { dibujarPunto(pos.izqArr); dibujarPunto(pos.derArr); dibujarPunto(pos.izqMed); dibujarPunto(pos.derMed); dibujarPunto(pos.izqAba); dibujarPunto(pos.derAba); }
-        }
-
-        function redibujarDados() {
-            const ctx = ui.ctx;
-            ctx.clearRect(0, 0, anchoCanvas, altoCanvas);
-            if (!estado) return;
-
-            const dados = animando ? dadosMostrados : estado.dados;
-            if (!dados || dados.length === 0) {
-                const j = jugadorDeTurno();
-                let mensaje = '';
-                if (estado.fase === 'jugando') mensaje = esMiTurno() ? '¡Lanzá los dados!' : `Esperando a ${j ? j.nombre : ''}…`;
-                ctx.fillStyle = 'white';
-                ctx.font = `bold ${Math.max(16, anchoCanvas / 18)}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(mensaje, anchoCanvas / 2, altoCanvas / 2);
+        ui.canvas.addEventListener('click', (evento) => {
+            if (!esMiTurno() || Mesa.animando() || estado.dados.length === 0) return;
+            const rect = ui.canvas.getBoundingClientRect();
+            const i = Mesa.dadoEn(
+                (evento.clientX - rect.left) * (Mesa.W / rect.width),
+                (evento.clientY - rect.top) * (Mesa.H / rect.height)
+            );
+            if (i < 0) return;
+            if (estado.obligatorios.includes(i)) {
+                mostrarAviso(`La jugada "${estado.jugadaObligatoria}" es obligatoria.`, 'error');
                 return;
             }
-            const layout = getDiceLayout();
-            for (let i = 0; i < dados.length; i++) {
-                const posX = layout.startX + i * (layout.tamanoDado + layout.espacioEntreDados);
-                const sel = !animando && estado.sel[i];
-                dibujarCara(dados[i], posX, layout.startY, layout.tamanoDado, sel, estado.fijos[i]);
-            }
-        }
-
-        function animarTirada() {
-            animando = true;
-            const fin = Date.now() + 550;
-            const paso = () => {
-                if (!estado) { animando = false; return; }
-                dadosMostrados = estado.dados.map((v, i) => estado.fijos[i] ? v : 1 + Math.floor(Math.random() * 6));
-                redibujarDados();
-                if (Date.now() < fin) setTimeout(paso, 60);
-                else { animando = false; render(); }
-            };
-            paso();
-        }
-
-        ui.canvas.addEventListener('click', (evento) => {
-            if (!esMiTurno() || animando || estado.dados.length === 0) return;
-            const layout = getDiceLayout();
-            const rect = ui.canvas.getBoundingClientRect();
-            const clickX = (evento.clientX - rect.left) * (anchoCanvas / rect.width);
-            const clickY = (evento.clientY - rect.top) * (altoCanvas / rect.height);
-            const margen = layout.espacioEntreDados / 2;   // un poco más de área para el dedo
-
-            for (let i = 0; i < NUM_DADOS; i++) {
-                const dadoX = layout.startX + i * (layout.tamanoDado + layout.espacioEntreDados);
-                if (!estado.fijos[i] &&
-                    clickX >= dadoX - margen && clickX <= dadoX + layout.tamanoDado + margen &&
-                    clickY >= layout.startY - margen && clickY <= layout.startY + layout.tamanoDado + margen) {
-                    if (estado.obligatorios.includes(i)) {
-                        mostrarAviso(`La jugada "${estado.jugadaObligatoria}" es obligatoria.`, 'error');
-                        break;
-                    }
-                    estado.sel[i] = !estado.sel[i];   // se muestra al instante; el servidor confirma
-                    vibrar(15);
-                    render();
-                    socket.emit('tocarDado', i, alResponder);
-                    break;
-                }
-            }
+            estado.sel[i] = !estado.sel[i];   // se muestra al instante; el servidor confirma
+            vibrar(15);
+            Sonido.tic();
+            render();
+            socket.emit('tocarDado', i, alResponder);
         });
 
-        // --- Render general ---
+        // ================= Interfaz =================
+        const coloresAvatar = ['#f5c542', '#2ee08a', '#4dabff', '#ff7a8a', '#d94bff', '#ffa94d', '#63e6be', '#a9e34b', '#ff8787', '#91a7ff'];
+        let puntosMostrados = 0;
+
+        function animarPuntos(valor) {
+            if (valor === puntosMostrados) return;
+            const desde = puntosMostrados, inicio = performance.now(), dur = 450;
+            puntosMostrados = valor;
+            ui.textoPuntuacion.classList.remove('salto');
+            void ui.textoPuntuacion.offsetWidth;
+            if (valor > desde) ui.textoPuntuacion.classList.add('salto');
+            const paso = (t) => {
+                const p = Math.min(1, (t - inicio) / dur);
+                ui.textoPuntuacion.textContent = Math.round(desde + (valor - desde) * (1 - Math.pow(1 - p, 3)));
+                if (p < 1 && puntosMostrados === valor) requestAnimationFrame(paso);
+            };
+            requestAnimationFrame(paso);
+        }
+
         function render() {
             const enSala = !!salaActual && !!estado;
             ui.pantallaInicio.classList.toggle('oculto', enSala);
             ui.pantallaSala.classList.toggle('oculto', !enSala);
+            document.body.classList.toggle('modo-culo', enSala && !!estado.culo && estado.dados.length > 0);
             if (!enSala) return;
 
             ui.codigoSala.textContent = estado.codigo;
             $('reglaAbrir').textContent = estado.constantes.PUNTOS_PARA_ABRIR;
             $('reglaGanar').textContent = estado.constantes.PUNTOS_PARA_GANAR;
+            const meta = estado.constantes.PUNTOS_PARA_GANAR;
 
-            // Lista de jugadores
+            // Jugadores
             ui.listaPuntuaciones.innerHTML = '';
             estado.jugadores.forEach((jugador, index) => {
                 const li = document.createElement('li');
-                const nombre = document.createElement('span');
+                li.className = 'jugador';
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar';
+                avatar.style.background = coloresAvatar[index % coloresAvatar.length];
+                avatar.textContent = jugador.nombre.charAt(0).toUpperCase();
+                const datos = document.createElement('div');
+                datos.className = 'datos';
+                const nombre = document.createElement('div');
+                nombre.className = 'nombre';
                 let prefijo = '';
                 if (jugador.id === estado.anfitrionId) prefijo += '👑 ';
                 if (!jugador.conectado) prefijo += '📵 ';
-                nombre.textContent = `${prefijo}${jugador.nombre}${jugador.id === jugadorId ? ' (vos)' : ''}: `;
-                const puntos = document.createElement('b');
+                nombre.textContent = `${prefijo}${jugador.nombre}${jugador.id === jugadorId ? ' (vos)' : ''}`;
+                const puntos = document.createElement('div');
+                puntos.className = 'puntos';
                 puntos.textContent = jugador.puntaje;
-                li.append(nombre, puntos);
+                datos.append(nombre, puntos);
                 if (estado.fase !== 'lobby' && !jugador.haAbierto) {
-                    const et = document.createElement('span');
-                    et.className = 'etiqueta';
-                    et.textContent = 'sin abrir';
-                    li.appendChild(et);
+                    const insignia = document.createElement('div');
+                    insignia.className = 'insignia';
+                    insignia.textContent = 'SIN ABRIR';
+                    datos.appendChild(insignia);
                 }
+                const barra = document.createElement('div');
+                barra.className = 'barra';
+                barra.style.width = `${Math.min(100, (jugador.puntaje / meta) * 100)}%`;
+                li.append(avatar, datos, barra);
                 if (estado.fase !== 'lobby' && index === estado.turno) li.classList.add('activo');
-                if (jugador.id === jugadorId) li.classList.add('yo');
                 if (!jugador.conectado) li.classList.add('desconectado');
                 ui.listaPuntuaciones.appendChild(li);
             });
@@ -624,49 +1396,59 @@
             const terminado = estado.fase === 'fin';
             ui.panelFin.classList.toggle('oculto', !terminado);
             if (terminado) {
-                ui.textoFin.textContent = `🎉 ¡Ganó ${estado.ganador}! 🎉`;
+                ui.textoFin.textContent = `🏆 ¡Ganó ${estado.ganador}!`;
                 ui.revanchaBtn.classList.toggle('oculto', !soyAnfitrion());
             }
 
             // Turno
             const j = jugadorDeTurno();
             const miTurno = esMiTurno();
-            ui.infoTurno.classList.toggle('miTurno', miTurno);
-            if (terminado) ui.infoTurno.textContent = 'Partida terminada';
-            else ui.infoTurno.textContent = miTurno ? '¡Es tu turno!' : `Turno de: ${j ? j.nombre : '-'}`;
+            const rodando = Mesa.animando();
+            ui.textoTurno.classList.toggle('miTurno', miTurno);
+            if (terminado) ui.textoTurno.textContent = 'Partida terminada';
+            else ui.textoTurno.textContent = miTurno ? '¡TU TURNO!' : `Turno de ${j ? j.nombre : '-'}`;
+            ui.insigniaCulo.classList.toggle('oculto', !(estado.culo && estado.dados.length > 0));
 
             // Puntos
             const seleccion = seleccionActual();
             const puntosSeleccion = calcularPuntuacion(seleccion);
-            ui.textoPuntuacion.textContent = `Puntuación del turno: ${estado.puntosTurno + puntosSeleccion}`;
+            animarPuntos(estado.puntosTurno + (rodando ? 0 : puntosSeleccion));
+
+            const hayDados = estado.dados.length > 0;
+            const yo = estado.jugadores.find(x => x.id === jugadorId);
+            const faltan = meta - (yo ? yo.puntaje : 0) - estado.puntosTurno;
+            const mesa = hayDados ? puntosEnMesa() : 0;
+            const caraSirve = mesa > 0 && mesa <= faltan;
 
             let ayuda = '';
-            if (estado.jugadaObligatoria && estado.dados.length > 0 && !estado.enBust) {
+            if (hayDados && !rodando && !estado.enBust && estado.jugadaObligatoria) {
                 ayuda = `🔒 ${estado.jugadaObligatoria}: es obligatoria. `;
             }
-            if (miTurno && estado.dados.length > 0) {
-                const yo = estado.jugadores.find(x => x.id === jugadorId);
-                const meta = estado.constantes.PUNTOS_PARA_GANAR;
-                if (seleccion.length === 0) ayuda += 'Tocá los dados con puntos para apartarlos.';
+            if (miTurno && hayDados && !rodando) {
+                if (mesa === 0) ayuda = '😬 Con esta cara no hay jugada… ¿y de CULO?';
+                else if (!caraSirve) ayuda = `⚠️ Así te pasás de ${meta}… ¿y de CULO?`;
+                else if (seleccion.length === 0) ayuda += 'Tocá los dados con puntos para apartarlos.';
                 else if (puntosSeleccion === 0 || dadosInutiles(seleccion).length > 0) ayuda += '⚠️ Hay dados elegidos que no suman puntos.';
-                else if (yo && yo.puntaje + estado.puntosTurno + puntosSeleccion > meta) ayuda += `⚠️ Con esto te pasás de ${meta}. Elegí menos dados.`;
                 else ayuda += `Seleccionados: +${puntosSeleccion}`;
             }
             ui.ayudaSeleccion.textContent = ayuda;
 
-            redibujarDados();
-
             // Botones
-            const puedeJugar = miTurno && !animando;
-            ui.lanzarBtn.disabled = !puedeJugar;
-            ui.lanzarBtn.textContent = estado.dados.length > 0 ? 'Lanzar de nuevo' : 'Lanzar dados';
-            ui.plantarseBtn.disabled = !puedeJugar || estado.dados.length === 0 || puntosSeleccion === 0;
+            const puedeJugar = miTurno && !rodando;
+            const seleccionValida = seleccion.length > 0 && puntosSeleccion > 0 && dadosInutiles(seleccion).length === 0;
+            ui.lanzarBtn.disabled = !puedeJugar || (hayDados && (!caraSirve || !seleccionValida));
+            ui.lanzarBtn.textContent = hayDados ? '🎲 Seguir' : '🎲 Lanzar';
+            ui.plantarseBtn.disabled = !puedeJugar || !hayDados || !caraSirve || !seleccionValida;
+            ui.culoBtn.classList.toggle('oculto', terminado);
+            ui.culoBtn.disabled = !puedeJugar || !hayDados;
+            ui.culoBtn.classList.toggle('activo', !!estado.culo && hayDados);
+            ui.culoBtn.textContent = estado.culo && hayDados ? '🍑 DE CULO · tocá para volver' : '🍑 CULO';
             ui.saltarBtn.classList.toggle('oculto', !(soyAnfitrion() && estado.fase === 'jugando' && j && j.id !== jugadorId));
         }
 
-        window.addEventListener('resize', resizeCanvas);
-        new ResizeObserver(resizeCanvas).observe(ui.canvas);
-        resizeCanvas();
+        window.addEventListener('resize', () => Mesa.redimensionar());
+        new ResizeObserver(() => Mesa.redimensionar()).observe(ui.canvas);
+        if (document.fonts && document.fonts.load) document.fonts.load('20px Bungee').catch(() => {});
         render();
     </script>
 </body>
