@@ -44,6 +44,11 @@
     // Devuelve las posiciones de los dados elegidos que no aportan puntos
     // (si se quitan, la puntuación de la selección no cambia).
     function dadosInutiles(dados) {
+        // En una combinación de 5 dados (full, escalera, póker, generala) cuentan todos,
+        // aunque el full de 6 valga lo mismo que la pierna de 6 sola.
+        const jugada = jugadaObligatoria(dados);
+        if (jugada && jugada.indices.length === 5) return [];
+
         const total = calcularPuntuacion(dados);
         const inutiles = [];
         for (let i = 0; i < dados.length; i++) {
