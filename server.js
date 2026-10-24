@@ -142,21 +142,6 @@ function validarSeleccion(sala) {
     return null;
 }
 
-// Menor cantidad de puntos que el jugador puede apartar en la tirada actual
-// (la jugada obligatoria o, si no hay ninguna, el 1 o 5 suelto de menor valor).
-function minimoAApartar(sala) {
-    const libres = indicesLibres(sala);
-    let minimo = Infinity;
-    for (let m = 1; m < (1 << libres.length); m++) {
-        const indices = libres.filter((_, k) => m & (1 << k));
-        if (sala.obligatorios.some(i => !indices.includes(i))) continue;
-        const valores = indices.map(i => sala.dados[i]);
-        const puntos = calcularPuntuacion(valores);
-        if (puntos > 0 && dadosInutiles(valores).length === 0) minimo = Math.min(minimo, puntos);
-    }
-    return minimo;
-}
-
 // Muestra los dados unos segundos y pasa el turno sin sumar.
 function perderTurno(sala, texto) {
     sala.enBust = true;
@@ -202,7 +187,17 @@ function lanzar(sala, jugador) {
     sala.tirada++;
 
     const disponibles = sala.dados.filter((_, i) => !sala.fijos[i]);
-    if (calcularPuntuacion(disponibles) === 0) {
+    if (disponibles.length === NUM_DADOS && new Set(disponibles).size === 1) {
+        // Generala: gana la partida sin importar los puntos.
+        sala.fase = 'fin';
+        sala.ganador = jugador.nombre;
+        marcarObligatoria(sala);
+        avisar(sala, `🎲 ¡GENERALA! ${jugador.nombre} gana la partida. 🎉`, 'bien');
+        return null;
+    }
+
+    const puntosMesa = calcularPuntuacion(disponibles);
+    if (puntosMesa === 0) {
         const perdidos = sala.puntosTurno;
         perderTurno(sala, perdidos > 0
             ? `¡Mala suerte, ${jugador.nombre}! No hay jugada posible. Pierde ${perdidos} puntos del turno.`
@@ -211,12 +206,9 @@ function lanzar(sala, jugador) {
     }
 
     marcarObligatoria(sala);
-    const faltan = PUNTOS_PARA_GANAR - jugador.puntaje - sala.puntosTurno;
-    if (minimoAApartar(sala) > faltan) {
-        // Lo que está obligado a apartar lo pasa de la meta: se pasó.
-        perderTurno(sala, sala.jugadaObligatoria
-            ? `¡${jugador.nombre} se pasó! Sacó ${sala.jugadaObligatoria}, que es obligatoria, y supera los ${PUNTOS_PARA_GANAR}. No suma nada.`
-            : `¡${jugador.nombre} se pasó de ${PUNTOS_PARA_GANAR}! No suma nada.`);
+    if (jugador.puntaje + sala.puntosTurno + puntosMesa > PUNTOS_PARA_GANAR) {
+        // Los puntos de la mesa lo pasan de la meta: pierde el turno.
+        perderTurno(sala, `¡${jugador.nombre} se pasó! Con ${sala.puntosTurno} del turno y ${puntosMesa} en la mesa superaba los ${PUNTOS_PARA_GANAR}. Sigue con ${jugador.puntaje}.`);
     } else if (calientes) {
         avisar(sala, `🔥 ¡Dados calientes! ${jugador.nombre} vuelve a lanzar los 5 dados con ${sala.puntosTurno} puntos acumulados.`, 'bien');
     }
