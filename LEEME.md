@@ -26,6 +26,18 @@ Juego de dados multijugador para jugar con amigos desde el celular.
 En el plan gratis el servidor se duerme tras ~15 min sin uso: la primera entrada tarda
 unos 30–50 segundos. Si se reinicia, las partidas en curso se pierden.
 
+## Guardar las partidas (Upstash, gratis)
+
+Para que una partida quede pendiente aunque Render se duerma o se publique una versión nueva,
+el servidor guarda todo en Upstash Redis:
+
+1. Creá una cuenta en https://upstash.com (podés entrar con GitHub).
+2. Create Database → tipo **Redis**, plan **Free**, la región más cercana (por ejemplo São Paulo).
+3. En la base creada, buscá la sección **REST API** y copiá `UPSTASH_REDIS_REST_URL` y `UPSTASH_REDIS_REST_TOKEN`.
+4. En Render → tu servicio → **Environment** → agregá esas dos variables con sus valores y guardá.
+
+Sin esas variables (por ejemplo en tu PC) las partidas se guardan en `datos/salas.json`.
+
 ## Cómo se juega online
 
 - Uno toca **Crear partida** y recibe un código de 4 letras.

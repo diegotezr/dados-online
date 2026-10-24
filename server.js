@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const os = require('os');
 const { Server } = require('socket.io');
 const { calcularPuntuacion, dadosInutiles, jugadaObligatoria } = require('./public/puntuacion.js');
+const almacen = require('./almacen.js');
 
 // --- Constantes del juego ---
 const PUNTOS_PARA_ABRIR = 750;
@@ -12,7 +13,9 @@ const PUNTOS_PARA_GANAR = 3000;
 const NUM_DADOS = 5;
 const MAX_JUGADORES = 10;
 const ESPERA_TRAS_PERDER_MS = 4000;   // tiempo para ver los dados antes de pasar el turno
-const SALA_INACTIVA_MS = 3 * 60 * 60 * 1000;
+const SALA_INACTIVA_MS = 30 * 24 * 60 * 60 * 1000;   // una partida sin uso se borra a los 30 días
+const MAX_MENSAJES = 100;
+const LARGO_MENSAJE = 300;
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
@@ -31,10 +34,10 @@ function nuevoCodigo() {
     return codigo;
 }
 
-function crearSala(anfitrionId) {
+function crearSala() {
     const sala = {
         codigo: nuevoCodigo(),
-        anfitrionId,
+        anfitrionId: null,
         fase: 'lobby',            // lobby | jugando | fin
         jugadores: [],
         turno: 0,
@@ -51,6 +54,8 @@ function crearSala(anfitrionId) {
         ganador: null,
         aviso: null,
         avisoSeq: 0,
+        chat: [],
+        chatSeq: 0,
         ultimaActividad: Date.now(),
         bustTimer: null
     };
@@ -85,6 +90,47 @@ function estadoPublico(sala) {
 
 function emitir(sala) {
     io.to(sala.codigo).emit('estado', estadoPublico(sala));
+    programarGuardado();
+}
+
+// --- Guardado de partidas ---
+let guardadoProgramado = null;
+
+function salaGuardable(sala) {
+    const { bustTimer, ...datos } = sala;
+    datos.jugadores = sala.jugadores.map(({ socketId, ultimoMensaje, ...j }) => ({ ...j, conectado: false }));
+    return datos;
+}
+
+async function guardarAhora() {
+    clearTimeout(guardadoProgramado);
+    guardadoProgramado = null;
+    try {
+        await almacen.escribir([...salas.values()].map(salaGuardable));
+    } catch (e) {
+        console.error('No se pudieron guardar las partidas:', e.message);
+    }
+}
+
+function programarGuardado() {
+    if (!guardadoProgramado) guardadoProgramado = setTimeout(guardarAhora, 1500);
+}
+
+async function cargarPartidas() {
+    const guardadas = await almacen.cargar();
+    for (const sala of guardadas) {
+        sala.bustTimer = null;
+        sala.chat = sala.chat || [];
+        sala.chatSeq = sala.chatSeq || 0;
+        sala.jugadores.forEach(j => { j.conectado = false; j.socketId = null; });
+        if (sala.enBust) {
+            // Se reinició el servidor justo mientras se pasaba el turno.
+            sala.enBust = false;
+            pasarTurno(sala);
+        }
+        salas.set(sala.codigo, sala);
+    }
+    console.log(`Partidas recuperadas: ${guardadas.length} (guardadas en ${almacen.descripcion})`);
 }
 
 function avisar(sala, texto, tipo = 'info') {
@@ -304,27 +350,55 @@ function quitarJugador(sala, jugador) {
 }
 
 // --- Conexiones ---
-function entrar(socket, sala, jugadorId, nombre, soloReconectar) {
-    let jugador = sala.jugadores.find(j => j.id === jugadorId);
+// Cada jugador tiene un id público (lo ven todos) y una clave secreta que guarda su
+// dispositivo. Con la clave (o el link personal) puede seguir jugando desde otro equipo.
+function entrar(socket, sala, clave, nombre, soloReconectar) {
+    let jugador = sala.jugadores.find(j => j.secreto === clave);
+    if (!jugador && !soloReconectar && nombre) {
+        // Mismo nombre que un jugador desconectado: es la misma persona en otro dispositivo.
+        const mismoNombre = sala.jugadores.find(j => j.nombre.toLowerCase() === nombre.toLowerCase());
+        if (mismoNombre && !mismoNombre.conectado) {
+            jugador = mismoNombre;
+            jugador.secreto = clave;
+        }
+    }
     if (!jugador) {
-        if (soloReconectar) return 'No estabas en esa sala.';
-        if (!nombre) return 'Escribí tu nombre.';
-        if (sala.jugadores.length >= MAX_JUGADORES) return 'La sala está llena.';
-        jugador = { id: jugadorId, nombre: nombreUnico(sala, nombre), puntaje: 0, haAbierto: false, conectado: true, socketId: null };
+        if (soloReconectar) return { error: 'Ya no estás en esa sala (quizás la abriste en otro dispositivo).' };
+        if (!nombre) return { error: 'Escribí tu nombre.' };
+        if (sala.jugadores.length >= MAX_JUGADORES) return { error: 'La sala está llena.' };
+        jugador = {
+            id: crypto.randomBytes(6).toString('hex'),
+            secreto: clave,
+            nombre: nombreUnico(sala, nombre),
+            puntaje: 0,
+            haAbierto: false,
+            conectado: true,
+            socketId: null
+        };
         sala.jugadores.push(jugador);
         avisar(sala, `${jugador.nombre} se unió a la partida.`);
     }
 
-    // Si este celular estaba en otra sala, la deja.
+    // Si la partida estaba abierta en otro dispositivo, ese queda afuera.
+    if (jugador.socketId && jugador.socketId !== socket.id) {
+        const anterior = io.sockets.sockets.get(jugador.socketId);
+        if (anterior) {
+            anterior.emit('reemplazado');
+            anterior.leave(sala.codigo);
+            anterior.data.codigo = null;
+            anterior.data.clave = null;
+        }
+    }
+    // Si este dispositivo estaba en otra sala, la deja.
     if (socket.data.codigo && socket.data.codigo !== sala.codigo) socket.leave(socket.data.codigo);
 
     jugador.conectado = true;
     jugador.socketId = socket.id;
     socket.join(sala.codigo);
     socket.data.codigo = sala.codigo;
-    socket.data.jugadorId = jugadorId;
+    socket.data.clave = clave;
     sala.ultimaActividad = Date.now();
-    return null;
+    return { jugador };
 }
 
 function respuesta(cb) {
@@ -339,11 +413,12 @@ io.on('connection', (socket) => {
         const nombre = limpiarNombre(datos?.nombre);
         if (!jugadorId) return cb({ error: 'Error de identificación. Recargá la página.' });
         if (!nombre) return cb({ error: 'Escribí tu nombre.' });
-        const sala = crearSala(jugadorId);
-        const error = entrar(socket, sala, jugadorId, nombre, false);
-        if (error) return cb({ error });
+        const sala = crearSala();
+        const { jugador } = entrar(socket, sala, jugadorId, nombre, false);
+        sala.anfitrionId = jugador.id;
         sala.aviso = null;
-        cb({ ok: true, codigo: sala.codigo });
+        cb({ ok: true, codigo: sala.codigo, miId: jugador.id });
+        socket.emit('chatHistorial', sala.chat);
         emitir(sala);
     });
 
@@ -354,20 +429,26 @@ io.on('connection', (socket) => {
         const sala = salas.get(codigo);
         if (!sala) return cb({ error: 'No existe una sala con ese código.' });
         if (!jugadorId) return cb({ error: 'Error de identificación. Recargá la página.' });
-        const error = entrar(socket, sala, jugadorId, limpiarNombre(datos?.nombre), !!datos?.soloReconectar);
+        const { error, jugador } = entrar(socket, sala, jugadorId, limpiarNombre(datos?.nombre), !!datos?.soloReconectar);
         if (error) return cb({ error });
-        cb({ ok: true, codigo: sala.codigo });
+        cb({ ok: true, codigo: sala.codigo, miId: jugador.id });
+        socket.emit('chatHistorial', sala.chat);
         emitir(sala);
     });
+
+    function miLugar() {
+        const sala = salas.get(socket.data.codigo);
+        const jugador = sala && sala.jugadores.find(j => j.secreto === socket.data.clave);
+        return { sala, jugador };
+    }
 
     // Acciones dentro de una sala
     function accion(evento, manejador) {
         socket.on(evento, (arg, cb) => {
             if (typeof arg === 'function') { cb = arg; arg = undefined; }
             cb = respuesta(cb);
-            const sala = salas.get(socket.data.codigo);
+            const { sala, jugador } = miLugar();
             if (!sala) return cb({ error: 'No estás en ninguna sala.' });
-            const jugador = sala.jugadores.find(j => j.id === socket.data.jugadorId);
             if (!jugador) return cb({ error: 'No estás en esta sala.' });
             const error = manejador(sala, jugador, arg);
             sala.ultimaActividad = Date.now();
@@ -429,13 +510,31 @@ io.on('connection', (socket) => {
         quitarJugador(sala, jugador);
         socket.leave(sala.codigo);
         socket.data.codigo = null;
-        socket.data.jugadorId = null;
+        socket.data.clave = null;
+    });
+
+    socket.on('chat', (texto, cb) => {
+        cb = respuesta(cb);
+        const { sala, jugador } = miLugar();
+        if (!sala || !jugador) return cb({ error: 'No estás en ninguna sala.' });
+        texto = String(texto || '').trim().slice(0, LARGO_MENSAJE);
+        if (!texto) return cb({ error: 'El mensaje está vacío.' });
+        const ahora = Date.now();
+        if (jugador.ultimoMensaje && ahora - jugador.ultimoMensaje < 400) return cb({ error: 'Más despacio 🙂' });
+        jugador.ultimoMensaje = ahora;
+
+        const mensaje = { id: ++sala.chatSeq, autor: jugador.id, nombre: jugador.nombre, texto, hora: ahora };
+        sala.chat.push(mensaje);
+        if (sala.chat.length > MAX_MENSAJES) sala.chat.shift();
+        sala.ultimaActividad = ahora;
+        io.to(sala.codigo).emit('chat', mensaje);
+        programarGuardado();
+        cb({ ok: true });
     });
 
     socket.on('disconnect', () => {
-        const sala = salas.get(socket.data.codigo);
+        const { sala, jugador } = miLugar();
         if (!sala) return;
-        const jugador = sala.jugadores.find(j => j.id === socket.data.jugadorId);
         if (jugador && jugador.socketId === socket.id) {
             jugador.conectado = false;
             emitir(sala);
@@ -443,7 +542,8 @@ io.on('connection', (socket) => {
     });
 });
 
-// Borra salas abandonadas.
+// Borra partidas abandonadas hace mucho (las partidas en curso quedan pendientes
+// hasta que alguien toque "Salir").
 setInterval(() => {
     const ahora = Date.now();
     for (const [codigo, sala] of salas) {
@@ -451,15 +551,24 @@ setInterval(() => {
         if (nadie && ahora - sala.ultimaActividad > SALA_INACTIVA_MS) {
             if (sala.bustTimer) clearTimeout(sala.bustTimer);
             salas.delete(codigo);
+            programarGuardado();
         }
     }
-}, 10 * 60 * 1000);
+}, 60 * 60 * 1000);
 
-module.exports = { server, salas };
+// Antes de apagarse (por ejemplo al publicar una versión nueva), guarda todo.
+for (const senal of ['SIGTERM', 'SIGINT']) {
+    process.on(senal, async () => {
+        await guardarAhora();
+        process.exit(0);
+    });
+}
+
+module.exports = { server, salas, cargarPartidas, guardarAhora };
 if (require.main !== module) return;
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+cargarPartidas().then(() => server.listen(PORT, () => {
     console.log(`🎲 Juego de dados en http://localhost:${PORT}`);
     for (const lista of Object.values(os.networkInterfaces())) {
         for (const red of lista || []) {
@@ -468,4 +577,4 @@ server.listen(PORT, () => {
             }
         }
     }
-});
+}));

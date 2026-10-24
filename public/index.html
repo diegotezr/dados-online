@@ -228,6 +228,146 @@
         td:last-child { text-align: right; font-weight: 700; color: var(--oro); }
         details p { color: #d6dccf; line-height: 1.45; }
 
+        /* ---------- Chat ---------- */
+        #chatBtn {
+            position: fixed;
+            right: 16px;
+            bottom: calc(16px + env(safe-area-inset-bottom));
+            width: 62px;
+            height: 62px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 28px;
+            z-index: 15;
+        }
+        .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 24px;
+            height: 24px;
+            padding: 0 6px;
+            border-radius: 12px;
+            background: var(--rojo);
+            color: #fff;
+            font: 800 13px/24px 'Rubik', sans-serif;
+            box-shadow: 0 0 0 2px var(--fondo);
+        }
+        #panelChat {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 20;
+            height: min(78vh, 600px);
+            display: flex;
+            flex-direction: column;
+            padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+            border-radius: 22px 22px 0 0;
+            background: #0e1b14;
+            transform: translateY(105%);
+            transition: transform 0.3s cubic-bezier(.2, .9, .3, 1);
+        }
+        #panelChat.abierto { transform: none; }
+        .chat-cabecera { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .chat-cabecera b { font-family: 'Bungee', sans-serif; font-weight: 400; font-size: 1.05em; color: var(--oro); letter-spacing: 1px; }
+        #chatMensajes {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 4px 2px 8px;
+            text-align: left;
+            overscroll-behavior: contain;
+        }
+        .chat-vacio { margin: auto; color: var(--tenue); text-align: center; }
+        .msg { max-width: 82%; align-self: flex-start; }
+        .msg.propio { align-self: flex-end; }
+        .msg-autor { font-size: 0.75em; font-weight: 700; margin: 6px 0 2px 10px; }
+        .msg-burbuja {
+            padding: 8px 12px;
+            border-radius: 16px 16px 16px 4px;
+            background: var(--panel-fuerte);
+            border: 1px solid var(--borde);
+            line-height: 1.35;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .msg.propio .msg-burbuja { background: linear-gradient(180deg, #f7d469, #e2a93a); color: #241800; border: none; border-radius: 16px 16px 4px 16px; }
+        .msg-hora { font-size: 11px; opacity: 0.6; margin-left: 8px; vertical-align: middle; }
+        .msg.solo-emoji .msg-burbuja { background: none; border: none; font-size: 2.2em; padding: 0 4px; }
+        #panelEmojis {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+            padding: 6px;
+            margin-bottom: 8px;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        #panelEmojis button { background: none; border: none; font-size: 24px; padding: 6px 0; cursor: pointer; border-radius: 8px; }
+        #panelEmojis button:active { background: var(--panel-fuerte); }
+        #chatForm { display: flex; gap: 6px; align-items: center; }
+        #chatInput { flex: 1; margin: 0; padding: 12px 14px; font-size: 16px; text-align: left; }
+        #chatForm .btn { flex: none; height: 46px; min-width: 46px; font-size: 20px; }
+
+        /* ---------- Cambio de dispositivo ---------- */
+        dialog {
+            width: min(92vw, 440px);
+            padding: 20px;
+            color: var(--texto);
+            background: #10201a;
+            border: 1px solid var(--borde);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        }
+        dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+        dialog h3 { margin: 0 0 8px; font-family: 'Bungee', sans-serif; font-weight: 400; color: var(--oro); }
+        dialog p { color: #d6dccf; line-height: 1.45; }
+        dialog .nota { font-size: 0.85em; color: var(--tenue); }
+        #linkPersonal { font-size: 14px; }
+        .fila { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+
+        .contenedor.sala { padding-bottom: 84px; }   /* lugar para el botón de chat */
+
+        /* ---------- Tablet y PC ---------- */
+        @media (min-width: 600px) {
+            .contenedor { max-width: 720px; }
+        }
+        @media (min-width: 960px) {
+            body { padding: 20px 24px; }
+            .contenedor.sala { padding-bottom: 0; }
+            .contenedor.sala {
+                max-width: 1240px;
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) 360px;
+                grid-template-areas: "barra barra" "principal jugadores" "principal chat";
+                grid-template-rows: auto auto 1fr;
+                column-gap: 24px;
+                align-items: start;
+            }
+            #barraSala { grid-area: barra; }
+            #listaPuntuaciones { grid-area: jugadores; grid-template-columns: 1fr 1fr; }
+            #principal { grid-area: principal; }
+            #juego, #lobby { max-width: 700px; margin-left: auto; margin-right: auto; }
+            details.reglas { max-width: 700px; margin-left: auto; margin-right: auto; }
+            #panelChat {
+                grid-area: chat;
+                position: sticky;
+                top: 16px;
+                height: calc(100vh - 210px);
+                min-height: 400px;
+                transform: none;
+                border-radius: 20px;
+                background: var(--panel);
+                padding: 14px;
+                z-index: auto;
+            }
+            #chatBtn, #cerrarChat { display: none !important; }
+            .btn:hover:not(:disabled) { filter: brightness(1.08); }
+        }
+
         /* ---------- Avisos ---------- */
         #avisos {
             position: fixed;
@@ -257,6 +397,7 @@
         .aviso.mal { background: linear-gradient(90deg, #8c1616, #c62828); }
         .aviso.error { background: linear-gradient(90deg, #a34400, #e65100); }
         .aviso.culo { background: linear-gradient(90deg, #7a1fb0, #c03be6); }
+        .aviso.chat { background: rgba(16, 32, 26, 0.96); border-color: var(--oro); }
         @keyframes entrar { from { transform: translateY(-24px) scale(0.95); opacity: 0; } to { transform: none; opacity: 1; } }
     </style>
 </head>
@@ -278,11 +419,12 @@
     </div>
 
     <!-- Pantalla de sala / juego -->
-    <div id="pantallaSala" class="contenedor oculto">
+    <div id="pantallaSala" class="contenedor sala oculto">
         <div id="barraSala">
             <div class="chip-sala">SALA<span id="codigoSala">----</span></div>
             <div class="acciones">
                 <button id="sonidoBtn" class="btn btn-oscuro btn-chico" aria-label="Sonido">🔊</button>
+                <button id="dispositivoBtn" class="btn btn-oscuro btn-chico" aria-label="Seguir en otro dispositivo">📲</button>
                 <button id="invitarBtn" class="btn btn-oro btn-chico">Invitar</button>
                 <button id="salirBtn" class="btn btn-oscuro btn-chico">Salir</button>
             </div>
@@ -290,6 +432,7 @@
 
         <ul id="listaPuntuaciones"></ul>
 
+        <div id="principal">
         <div id="lobby" class="tarjeta">
             <p id="textoLobby">Esperando jugadores…</p>
             <button id="empezarBtn" class="btn btn-verde btn-ancho">Empezar partida</button>
@@ -322,7 +465,7 @@
             <button id="saltarBtn" class="btn btn-texto oculto">Saltar turno de este jugador</button>
         </div>
 
-        <details class="tarjeta">
+        <details class="tarjeta reglas">
             <summary>Reglas y puntos</summary>
             <table>
                 <tr><td>Cada 1</td><td>100</td></tr>
@@ -344,7 +487,37 @@
             Gana quien llega a <b id="reglaGanar">3000</b> exactos, o quien saca <b>generala</b>.
             Si los puntos de la mesa (sumados a los que ya tenés) te pasan de la meta, perdés el turno y te quedás con lo que tenías al empezarlo.</p>
         </details>
+        </div>
+
+        <section id="panelChat" class="tarjeta" aria-label="Chat de la partida">
+            <div class="chat-cabecera">
+                <b>💬 CHAT</b>
+                <button id="cerrarChat" class="btn btn-oscuro btn-chico" aria-label="Cerrar chat">✕</button>
+            </div>
+            <div id="chatMensajes"></div>
+            <div id="panelEmojis" class="oculto"></div>
+            <form id="chatForm" autocomplete="off">
+                <button type="button" id="emojiBtn" class="btn btn-oscuro" aria-label="Emojis">😀</button>
+                <input id="chatInput" maxlength="300" placeholder="Escribí un mensaje…"
+                       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="send">
+                <button type="submit" class="btn btn-oro" aria-label="Enviar">➤</button>
+            </form>
+        </section>
+        <button id="chatBtn" class="btn btn-oro" aria-label="Abrir chat">💬<span id="chatBadge" class="badge oculto">0</span></button>
+
     </div>
+
+    <dialog id="dialogoDispositivo">
+        <h3>📲 Otro dispositivo</h3>
+        <p>Abrí este link en la PC, la tablet u otro celular y seguís jugando como <b id="nombreDispositivo"></b>, con tus mismos puntos.</p>
+        <input id="linkPersonal" readonly>
+        <div class="fila">
+            <button id="copiarLinkBtn" class="btn btn-oro btn-chico">Copiar</button>
+            <button id="compartirLinkBtn" class="btn btn-verde btn-chico">Compartir</button>
+            <button id="cerrarDialogoBtn" class="btn btn-oscuro btn-chico">Cerrar</button>
+        </div>
+        <p class="nota">Es personal: quien lo abra juega como vos. Si este dispositivo ya está cerrado, también podés entrar desde el otro con el código de la sala y tu mismo nombre.</p>
+    </dialog>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/puntuacion.js"></script>
@@ -394,7 +567,17 @@
             return id;
         }
 
-        const jugadorId = obtenerJugadorId();
+        // Link personal para seguir en otro dispositivo: ?sala=XXXX&clave=...
+        const parametros = new URLSearchParams(location.search);
+        const claveDelLink = parametros.get('clave');
+        if (claveDelLink) {
+            guardar('dados_jugadorId', claveDelLink);
+            if (parametros.get('sala')) guardar('dados_sala', parametros.get('sala').toUpperCase().slice(0, 4));
+            parametros.delete('clave');
+            history.replaceState(null, '', location.pathname + (parametros.toString() ? '?' + parametros : ''));
+        }
+        const jugadorId = claveDelLink || obtenerJugadorId();
+        let miId = null;
         let salaActual = null;
         let estado = null;
         let ultimoAvisoId = null;
@@ -508,7 +691,8 @@
                 culo() { deslizar(720, 150, 0.32, 'sine', 0.28); nota(1200, 0.3, 0.12, 'sine', 0.1); },
                 plantarse() { [988, 1319].forEach((f, i) => nota(f, i * 0.09, 0.35, 'square', 0.06)); },
                 turno() { nota(880, 0, 0.18, 'sine', 0.14); nota(1318.5, 0.12, 0.3, 'sine', 0.14); },
-                tic() { nota(1600, 0, 0.04, 'square', 0.035); }
+                tic() { nota(1600, 0, 0.04, 'square', 0.035); },
+                mensaje() { nota(1046.5, 0, 0.1, 'sine', 0.1); nota(1568, 0.08, 0.16, 'sine', 0.1); }
             };
         })();
         document.addEventListener('pointerdown', () => Sonido.iniciar(), { passive: true });
@@ -1094,8 +1278,9 @@
             if (res && res.error) mostrarAviso(res.error, 'error');
         }
 
-        function entrarASala(codigo) {
+        function entrarASala(codigo, id) {
             salaActual = codigo;
+            miId = id;
             guardar('dados_sala', codigo);
             history.replaceState(null, '', '?sala=' + codigo);
         }
@@ -1103,6 +1288,10 @@
         function salirDeSala() {
             salaActual = null;
             estado = null;
+            miId = null;
+            mensajes = [];
+            noLeidos = 0;
+            abrirChat(false);
             borrar('dados_sala');
             history.replaceState(null, '', location.pathname);
             render();
@@ -1120,7 +1309,7 @@
             if (!nombre) return;
             socket.emit('crear', { nombre, jugadorId }, res => {
                 if (res.error) return mostrarAviso(res.error, 'error');
-                entrarASala(res.codigo);
+                entrarASala(res.codigo, res.miId);
             });
         });
 
@@ -1134,7 +1323,7 @@
             if (codigo.length !== 4) return mostrarAviso('El código tiene 4 letras.', 'error');
             socket.emit('unirse', { codigo, nombre, jugadorId }, res => {
                 if (res.error) return mostrarAviso(res.error, 'error');
-                entrarASala(res.codigo);
+                entrarASala(res.codigo, res.miId);
             });
         }
 
@@ -1144,16 +1333,21 @@
             if (!codigo) return;
             socket.emit('unirse', { codigo, jugadorId, soloReconectar: true }, res => {
                 if (res.error) {
-                    if (salaActual) mostrarAviso('La sala ya no existe.', 'error');
+                    if (salaActual || claveDelLink) mostrarAviso(res.error, 'error');
                     salirDeSala();
                 } else {
-                    entrarASala(res.codigo);
+                    entrarASala(res.codigo, res.miId);
                 }
             });
         });
 
         socket.on('disconnect', () => {
             if (salaActual) mostrarAviso('Se perdió la conexión. Reconectando…', 'error');
+        });
+
+        socket.on('reemplazado', () => {
+            salirDeSala();
+            mostrarAviso('Abriste esta partida en otro dispositivo. Para volver acá, entrá con el código de la sala y tu nombre.', 'info');
         });
 
         socket.on('estado', nuevo => {
@@ -1256,9 +1450,9 @@
         // ================= Ayudantes de estado =================
         function jugadorDeTurno() { return estado && estado.jugadores[estado.turno]; }
         function esMiTurno() {
-            return !!estado && estado.fase === 'jugando' && !estado.enBust && jugadorDeTurno()?.id === jugadorId;
+            return !!estado && estado.fase === 'jugando' && !estado.enBust && jugadorDeTurno()?.id === miId;
         }
-        function soyAnfitrion() { return !!estado && estado.anfitrionId === jugadorId; }
+        function soyAnfitrion() { return !!estado && estado.anfitrionId === miId; }
         function seleccionActual() { return estado.dados.filter((_, i) => estado.sel[i] && !estado.fijos[i]); }
         function puntosEnMesa() { return calcularPuntuacion(estado.dados.filter((_, i) => !estado.fijos[i])); }
 
@@ -1311,6 +1505,171 @@
             socket.emit('tocarDado', i, alResponder);
         });
 
+        // ================= Chat =================
+        const EMOJIS = ['😀', '😂', '🤣', '😅', '😉', '😎', '😍', '🥳', '😜', '🤔', '😏', '😬', '😱', '😭', '😡', '🤬',
+            '🙏', '👏', '👍', '👎', '💪', '🤞', '✌️', '🤙', '🔥', '🎲', '🍑', '🍀', '💰', '🏆', '❤️', '💩'];
+        const escritorio = window.matchMedia('(min-width: 960px)');
+        const chat = {
+            panel: $('panelChat'),
+            lista: $('chatMensajes'),
+            form: $('chatForm'),
+            input: $('chatInput'),
+            emojis: $('panelEmojis'),
+            boton: $('chatBtn'),
+            badge: $('chatBadge')
+        };
+        let mensajes = [];
+        let noLeidos = 0;
+        let chatAbierto = false;
+
+        EMOJIS.forEach(emoji => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = emoji;
+            b.addEventListener('click', () => insertarEmoji(emoji));
+            chat.emojis.appendChild(b);
+        });
+
+        function insertarEmoji(emoji) {
+            const { input } = chat;
+            const inicio = input.selectionStart ?? input.value.length;
+            const fin = input.selectionEnd ?? inicio;
+            input.value = (input.value.slice(0, inicio) + emoji + input.value.slice(fin)).slice(0, 300);
+            const cursor = inicio + emoji.length;
+            input.setSelectionRange(cursor, cursor);
+        }
+
+        function chatVisible() { return escritorio.matches || chatAbierto; }
+
+        function abrirChat(abrir) {
+            chatAbierto = abrir;
+            chat.panel.classList.toggle('abierto', abrir);
+            if (!abrir) chat.emojis.classList.add('oculto');
+            if (chatVisible()) {
+                noLeidos = 0;
+                actualizarBadge();
+                chat.lista.scrollTop = chat.lista.scrollHeight;
+            }
+        }
+
+        function actualizarBadge() {
+            chat.badge.textContent = noLeidos > 9 ? '9+' : noLeidos;
+            chat.badge.classList.toggle('oculto', noLeidos === 0);
+        }
+
+        function colorDe(autorId) {
+            const i = estado ? estado.jugadores.findIndex(j => j.id === autorId) : -1;
+            return i >= 0 ? coloresAvatar[i % coloresAvatar.length] : '#9fb3a6';
+        }
+
+        function soloEmojis(texto) {
+            return /^(\p{Extended_Pictographic}|\p{Emoji_Component}|\u200d|\ufe0f|\s)+$/u.test(texto) && !/[0-9#*]/.test(texto);
+        }
+
+        function agregarMensaje(m, anterior) {
+            const vacio = chat.lista.querySelector('.chat-vacio');
+            if (vacio) vacio.remove();
+            const cercaDelFinal = chat.lista.scrollHeight - chat.lista.scrollTop - chat.lista.clientHeight < 80;
+
+            const div = document.createElement('div');
+            div.className = 'msg';
+            const propio = m.autor === miId;
+            if (propio) div.classList.add('propio');
+            if (soloEmojis(m.texto) && [...m.texto.trim()].length <= 8) div.classList.add('solo-emoji');
+            if (!propio && (!anterior || anterior.autor !== m.autor)) {
+                const autor = document.createElement('div');
+                autor.className = 'msg-autor';
+                autor.style.color = colorDe(m.autor);
+                autor.textContent = m.nombre;
+                div.appendChild(autor);
+            }
+            const burbuja = document.createElement('div');
+            burbuja.className = 'msg-burbuja';
+            burbuja.textContent = m.texto;
+            const hora = document.createElement('span');
+            hora.className = 'msg-hora';
+            hora.textContent = new Date(m.hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+            burbuja.appendChild(hora);
+            div.appendChild(burbuja);
+            chat.lista.appendChild(div);
+            if (cercaDelFinal || propio) chat.lista.scrollTop = chat.lista.scrollHeight;
+        }
+
+        function dibujarChat() {
+            chat.lista.innerHTML = '';
+            if (!mensajes.length) {
+                const vacio = document.createElement('div');
+                vacio.className = 'chat-vacio';
+                vacio.textContent = 'Todavía no hay mensajes. ¡Saludá! 👋';
+                chat.lista.appendChild(vacio);
+                return;
+            }
+            mensajes.forEach((m, i) => agregarMensaje(m, mensajes[i - 1]));
+            chat.lista.scrollTop = chat.lista.scrollHeight;
+        }
+
+        socket.on('chatHistorial', lista => {
+            mensajes = Array.isArray(lista) ? lista : [];
+            noLeidos = 0;
+            actualizarBadge();
+            dibujarChat();
+        });
+
+        socket.on('chat', m => {
+            const anterior = mensajes[mensajes.length - 1];
+            mensajes.push(m);
+            if (mensajes.length > 100) mensajes.shift();
+            agregarMensaje(m, anterior);
+            if (m.autor === miId) return;
+            Sonido.mensaje();
+            if (!chatVisible()) {
+                noLeidos++;
+                actualizarBadge();
+                mostrarAviso(`💬 ${m.nombre}: ${m.texto.length > 70 ? m.texto.slice(0, 70) + '…' : m.texto}`, 'chat');
+                vibrar(40);
+            }
+        });
+
+        chat.form.addEventListener('submit', e => {
+            e.preventDefault();
+            const texto = chat.input.value.trim();
+            if (!texto) return;
+            socket.emit('chat', texto, res => {
+                if (res && res.error) mostrarAviso(res.error, 'error');
+            });
+            chat.input.value = '';
+            chat.emojis.classList.add('oculto');
+        });
+        $('emojiBtn').addEventListener('click', () => chat.emojis.classList.toggle('oculto'));
+        chat.boton.addEventListener('click', () => abrirChat(true));
+        $('cerrarChat').addEventListener('click', () => abrirChat(false));
+        escritorio.addEventListener('change', () => abrirChat(false));
+
+        // ================= Otro dispositivo =================
+        const dialogo = $('dialogoDispositivo');
+        function linkPersonal() {
+            return `${location.origin}${location.pathname}?sala=${salaActual}&clave=${encodeURIComponent(jugadorId)}`;
+        }
+        $('dispositivoBtn').addEventListener('click', () => {
+            const yo = estado && estado.jugadores.find(j => j.id === miId);
+            $('nombreDispositivo').textContent = yo ? yo.nombre : 'vos';
+            $('linkPersonal').value = linkPersonal();
+            $('compartirLinkBtn').classList.toggle('oculto', !navigator.share);
+            dialogo.showModal();
+        });
+        $('cerrarDialogoBtn').addEventListener('click', () => dialogo.close());
+        $('copiarLinkBtn').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(linkPersonal());
+                mostrarAviso('Link personal copiado.', 'bien');
+            } catch (e) {
+                $('linkPersonal').select();
+            }
+        });
+        $('compartirLinkBtn').addEventListener('click', async () => {
+            try { await navigator.share({ title: 'Mi lugar en Dados Online', url: linkPersonal() }); } catch (e) {}
+        });
+
         // ================= Interfaz =================
         const coloresAvatar = ['#f5c542', '#2ee08a', '#4dabff', '#ff7a8a', '#d94bff', '#ffa94d', '#63e6be', '#a9e34b', '#ff8787', '#91a7ff'];
         let puntosMostrados = 0;
@@ -1358,7 +1717,7 @@
                 let prefijo = '';
                 if (jugador.id === estado.anfitrionId) prefijo += '👑 ';
                 if (!jugador.conectado) prefijo += '📵 ';
-                nombre.textContent = `${prefijo}${jugador.nombre}${jugador.id === jugadorId ? ' (vos)' : ''}`;
+                nombre.textContent = `${prefijo}${jugador.nombre}${jugador.id === miId ? ' (vos)' : ''}`;
                 const puntos = document.createElement('div');
                 puntos.className = 'puntos';
                 puntos.textContent = jugador.puntaje;
@@ -1415,7 +1774,7 @@
             animarPuntos(estado.puntosTurno + (rodando ? 0 : puntosSeleccion));
 
             const hayDados = estado.dados.length > 0;
-            const yo = estado.jugadores.find(x => x.id === jugadorId);
+            const yo = estado.jugadores.find(x => x.id === miId);
             const faltan = meta - (yo ? yo.puntaje : 0) - estado.puntosTurno;
             const mesa = hayDados ? puntosEnMesa() : 0;
             const caraSirve = mesa > 0 && mesa <= faltan;
@@ -1443,7 +1802,7 @@
             ui.culoBtn.disabled = !puedeJugar || !hayDados;
             ui.culoBtn.classList.toggle('activo', !!estado.culo && hayDados);
             ui.culoBtn.textContent = estado.culo && hayDados ? '🍑 DE CULO · tocá para volver' : '🍑 CULO';
-            ui.saltarBtn.classList.toggle('oculto', !(soyAnfitrion() && estado.fase === 'jugando' && j && j.id !== jugadorId));
+            ui.saltarBtn.classList.toggle('oculto', !(soyAnfitrion() && estado.fase === 'jugando' && j && j.id !== miId));
         }
 
         window.addEventListener('resize', () => Mesa.redimensionar());
