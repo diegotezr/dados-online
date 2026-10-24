@@ -230,10 +230,12 @@
                 <tr><td>Póker (4 iguales + 1)</td><td>700</td></tr>
                 <tr><td>Generala (5 iguales)</td><td>10000</td></tr>
             </table>
-            <p>Tocá los dados con puntos para apartarlos y volvé a lanzar los demás. Si en una tirada no sale nada, perdés los puntos del turno.
+            <p>En cada tirada tenés que apartar al menos un dado con puntos (para seguir lanzando o para plantarte). Si en una tirada no sale nada, perdés los puntos del turno.
             Si apartás los 5 dados, son <b>dados calientes</b> y volvés a lanzar los 5.</p>
+            <p><b>Las combinaciones son obligatorias:</b> si sale una pierna (3 iguales), escalera, full, póker o generala, tenés que usarla entera.
+            Los 1 y 5 sueltos sí los podés elegir: por ejemplo, con 1-5-5 podés quedarte solo con el 1.</p>
             <p>Para empezar a sumar necesitás <b id="reglaAbrir">750</b> puntos en un solo turno.
-            Gana quien llega a <b id="reglaGanar">3000</b> exactos: si te pasás, no sumás ese turno.</p>
+            Gana quien llega a <b id="reglaGanar">3000</b> exactos. Si lo que estás obligado a apartar te pasa de la meta, te pasaste y no sumás ese turno.</p>
         </details>
     </div>
 
@@ -555,6 +557,10 @@
                 if (!estado.fijos[i] &&
                     clickX >= dadoX - margen && clickX <= dadoX + layout.tamanoDado + margen &&
                     clickY >= layout.startY - margen && clickY <= layout.startY + layout.tamanoDado + margen) {
+                    if (estado.obligatorios.includes(i)) {
+                        mostrarAviso(`La jugada "${estado.jugadaObligatoria}" es obligatoria.`, 'error');
+                        break;
+                    }
                     estado.sel[i] = !estado.sel[i];   // se muestra al instante; el servidor confirma
                     vibrar(15);
                     render();
@@ -634,10 +640,16 @@
             ui.textoPuntuacion.textContent = `Puntuación del turno: ${estado.puntosTurno + puntosSeleccion}`;
 
             let ayuda = '';
+            if (estado.jugadaObligatoria && estado.dados.length > 0 && !estado.enBust) {
+                ayuda = `🔒 ${estado.jugadaObligatoria}: es obligatoria. `;
+            }
             if (miTurno && estado.dados.length > 0) {
-                if (seleccion.length === 0) ayuda = 'Tocá los dados con puntos para apartarlos.';
-                else if (puntosSeleccion === 0 || dadosInutiles(seleccion).length > 0) ayuda = '⚠️ Hay dados elegidos que no suman puntos.';
-                else ayuda = `Seleccionados: +${puntosSeleccion}`;
+                const yo = estado.jugadores.find(x => x.id === jugadorId);
+                const meta = estado.constantes.PUNTOS_PARA_GANAR;
+                if (seleccion.length === 0) ayuda += 'Tocá los dados con puntos para apartarlos.';
+                else if (puntosSeleccion === 0 || dadosInutiles(seleccion).length > 0) ayuda += '⚠️ Hay dados elegidos que no suman puntos.';
+                else if (yo && yo.puntaje + estado.puntosTurno + puntosSeleccion > meta) ayuda += `⚠️ Con esto te pasás de ${meta}. Elegí menos dados.`;
+                else ayuda += `Seleccionados: +${puntosSeleccion}`;
             }
             ui.ayudaSeleccion.textContent = ayuda;
 
@@ -647,8 +659,7 @@
             const puedeJugar = miTurno && !animando;
             ui.lanzarBtn.disabled = !puedeJugar;
             ui.lanzarBtn.textContent = estado.dados.length > 0 ? 'Lanzar de nuevo' : 'Lanzar dados';
-            ui.plantarseBtn.disabled = !puedeJugar || estado.dados.length === 0 ||
-                (estado.puntosTurno === 0 && puntosSeleccion === 0);
+            ui.plantarseBtn.disabled = !puedeJugar || estado.dados.length === 0 || puntosSeleccion === 0;
             ui.saltarBtn.classList.toggle('oculto', !(soyAnfitrion() && estado.fase === 'jugando' && j && j.id !== jugadorId));
         }
 

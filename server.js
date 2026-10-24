@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
 const { Server } = require('socket.io');
-const { calcularPuntuacion, dadosInutiles } = require('./public/puntuacion.js');
+const { calcularPuntuacion, dadosInutiles, jugadaObligatoria } = require('./public/puntuacion.js');
 
 // --- Constantes del juego ---
 const PUNTOS_PARA_ABRIR = 750;
@@ -42,6 +42,8 @@ function crearSala(anfitrionId) {
         sel: new Array(NUM_DADOS).fill(false),
         fijos: new Array(NUM_DADOS).fill(false),
         puntosTurno: 0,
+        obligatorios: [],
+        jugadaObligatoria: null,
         tirada: 0,
         enBust: false,
         ganador: null,
@@ -67,6 +69,8 @@ function estadoPublico(sala) {
         sel: sala.sel,
         fijos: sala.fijos,
         puntosTurno: sala.puntosTurno,
+        obligatorios: sala.obligatorios,
+        jugadaObligatoria: sala.jugadaObligatoria,
         tirada: sala.tirada,
         enBust: sala.enBust,
         ganador: sala.ganador,
@@ -101,6 +105,8 @@ function iniciarNuevoTurno(sala) {
     sala.dados = [];
     sala.sel.fill(false);
     sala.fijos.fill(false);
+    sala.obligatorios = [];
+    sala.jugadaObligatoria = null;
 }
 
 function pasarTurno(sala) {
@@ -113,23 +119,71 @@ function elegidos(sala) {
     return sala.dados.filter((_, i) => sala.sel[i] && !sala.fijos[i]);
 }
 
+function indicesLibres(sala) {
+    return sala.dados.map((_, i) => i).filter(i => !sala.fijos[i]);
+}
+
+// Detecta la combinación obligatoria de la tirada actual y la deja seleccionada.
+function marcarObligatoria(sala) {
+    const libres = indicesLibres(sala);
+    const jugada = jugadaObligatoria(libres.map(i => sala.dados[i]));
+    sala.obligatorios = jugada ? jugada.indices.map(k => libres[k]) : [];
+    sala.jugadaObligatoria = jugada ? jugada.nombre : null;
+    sala.obligatorios.forEach(i => { sala.sel[i] = true; });
+}
+
 // Devuelve un mensaje de error si la selección actual no es válida.
-function validarSeleccion(seleccion) {
-    if (seleccion.length === 0) return null;
+function validarSeleccion(sala) {
+    const seleccion = elegidos(sala);
+    if (seleccion.length === 0) return 'Debes seleccionar al menos un dado con puntos para continuar.';
+    if (sala.obligatorios.some(i => !sala.sel[i])) return `La jugada "${sala.jugadaObligatoria}" es obligatoria.`;
     if (calcularPuntuacion(seleccion) === 0) return 'Los dados seleccionados no suman puntos.';
     if (dadosInutiles(seleccion).length > 0) return 'Seleccionaste dados que no suman puntos. Destildalos.';
     return null;
 }
 
+// Menor cantidad de puntos que el jugador puede apartar en la tirada actual
+// (la jugada obligatoria o, si no hay ninguna, el 1 o 5 suelto de menor valor).
+function minimoAApartar(sala) {
+    const libres = indicesLibres(sala);
+    let minimo = Infinity;
+    for (let m = 1; m < (1 << libres.length); m++) {
+        const indices = libres.filter((_, k) => m & (1 << k));
+        if (sala.obligatorios.some(i => !indices.includes(i))) continue;
+        const valores = indices.map(i => sala.dados[i]);
+        const puntos = calcularPuntuacion(valores);
+        if (puntos > 0 && dadosInutiles(valores).length === 0) minimo = Math.min(minimo, puntos);
+    }
+    return minimo;
+}
+
+// Muestra los dados unos segundos y pasa el turno sin sumar.
+function perderTurno(sala, texto) {
+    sala.enBust = true;
+    avisar(sala, texto, 'mal');
+    const tirada = sala.tirada;
+    sala.bustTimer = setTimeout(() => {
+        sala.bustTimer = null;
+        if (!salas.has(sala.codigo) || sala.tirada !== tirada || !sala.enBust) return;
+        sala.enBust = false;
+        pasarTurno(sala);
+        emitir(sala);
+    }, ESPERA_TRAS_PERDER_MS);
+}
+
+function mensajePasarse(puntosTurno) {
+    return `Con esa selección sumás ${puntosTurno} en el turno y te pasás de ${PUNTOS_PARA_GANAR}. Elegí menos dados.`;
+}
+
 function lanzar(sala, jugador) {
     let calientes = false;
     if (sala.dados.length > 0) {
-        const seleccion = elegidos(sala);
-        if (seleccion.length === 0) return 'Debes seleccionar al menos un dado con puntos para continuar.';
-        const error = validarSeleccion(seleccion);
+        const error = validarSeleccion(sala);
         if (error) return error;
+        const puntosTurno = sala.puntosTurno + calcularPuntuacion(elegidos(sala));
+        if (jugador.puntaje + puntosTurno > PUNTOS_PARA_GANAR) return mensajePasarse(puntosTurno);
 
-        sala.puntosTurno += calcularPuntuacion(seleccion);
+        sala.puntosTurno = puntosTurno;
         for (let i = 0; i < NUM_DADOS; i++) {
             if (sala.sel[i]) sala.fijos[i] = true;
         }
@@ -143,24 +197,26 @@ function lanzar(sala, jugador) {
         if (!sala.fijos[i]) sala.dados[i] = crypto.randomInt(1, 7);
     }
     sala.sel.fill(false);
+    sala.obligatorios = [];
+    sala.jugadaObligatoria = null;
     sala.tirada++;
 
     const disponibles = sala.dados.filter((_, i) => !sala.fijos[i]);
     if (calcularPuntuacion(disponibles) === 0) {
-        // Bust: se muestran los dados un momento y pasa el turno.
-        sala.enBust = true;
         const perdidos = sala.puntosTurno;
-        avisar(sala, perdidos > 0
+        perderTurno(sala, perdidos > 0
             ? `¡Mala suerte, ${jugador.nombre}! No hay jugada posible. Pierde ${perdidos} puntos del turno.`
-            : `¡Mala suerte, ${jugador.nombre}! No hay jugada posible.`, 'mal');
-        const tirada = sala.tirada;
-        sala.bustTimer = setTimeout(() => {
-            sala.bustTimer = null;
-            if (!salas.has(sala.codigo) || sala.tirada !== tirada || !sala.enBust) return;
-            sala.enBust = false;
-            pasarTurno(sala);
-            emitir(sala);
-        }, ESPERA_TRAS_PERDER_MS);
+            : `¡Mala suerte, ${jugador.nombre}! No hay jugada posible.`);
+        return null;
+    }
+
+    marcarObligatoria(sala);
+    const faltan = PUNTOS_PARA_GANAR - jugador.puntaje - sala.puntosTurno;
+    if (minimoAApartar(sala) > faltan) {
+        // Lo que está obligado a apartar lo pasa de la meta: se pasó.
+        perderTurno(sala, sala.jugadaObligatoria
+            ? `¡${jugador.nombre} se pasó! Sacó ${sala.jugadaObligatoria}, que es obligatoria, y supera los ${PUNTOS_PARA_GANAR}. No suma nada.`
+            : `¡${jugador.nombre} se pasó de ${PUNTOS_PARA_GANAR}! No suma nada.`);
     } else if (calientes) {
         avisar(sala, `🔥 ¡Dados calientes! ${jugador.nombre} vuelve a lanzar los 5 dados con ${sala.puntosTurno} puntos acumulados.`, 'bien');
     }
@@ -169,18 +225,14 @@ function lanzar(sala, jugador) {
 
 function plantarse(sala, jugador) {
     if (sala.dados.length === 0) return 'Primero tenés que lanzar los dados.';
-    const seleccion = elegidos(sala);
-    const error = validarSeleccion(seleccion);
+    const error = validarSeleccion(sala);
     if (error) return error;
 
-    const puntosFinalesTurno = sala.puntosTurno + calcularPuntuacion(seleccion);
-    if (puntosFinalesTurno === 0) return 'No tenés puntos para plantarte.';
-
+    const puntosFinalesTurno = sala.puntosTurno + calcularPuntuacion(elegidos(sala));
     const nuevoPuntajeTotal = jugador.puntaje + puntosFinalesTurno;
+    if (nuevoPuntajeTotal > PUNTOS_PARA_GANAR) return mensajePasarse(puntosFinalesTurno);
 
-    if (nuevoPuntajeTotal > PUNTOS_PARA_GANAR) {
-        avisar(sala, `¡${jugador.nombre} se pasó! Tenía ${jugador.puntaje} y con ${puntosFinalesTurno} se pasaba de ${PUNTOS_PARA_GANAR}. No suma nada.`, 'mal');
-    } else if (nuevoPuntajeTotal === PUNTOS_PARA_GANAR) {
+    if (nuevoPuntajeTotal === PUNTOS_PARA_GANAR) {
         jugador.puntaje = nuevoPuntajeTotal;
         jugador.haAbierto = true;
         sala.fase = 'fin';
@@ -333,6 +385,7 @@ io.on('connection', (socket) => {
     accion('tocarDado', enSuTurno((sala, jugador, i) => {
         if (!Number.isInteger(i) || i < 0 || i >= NUM_DADOS) return 'Dado inválido.';
         if (sala.dados.length === 0 || sala.fijos[i]) return 'Ese dado no se puede elegir.';
+        if (sala.obligatorios.includes(i)) return `La jugada "${sala.jugadaObligatoria}" es obligatoria.`;
         sala.sel[i] = !sala.sel[i];
     }));
 
@@ -379,6 +432,9 @@ setInterval(() => {
         }
     }
 }, 10 * 60 * 1000);
+
+module.exports = { server, salas };
+if (require.main !== module) return;
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

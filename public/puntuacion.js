@@ -53,5 +53,34 @@
         return inutiles;
     }
 
-    return { calcularPuntuacion, dadosInutiles };
+    // Busca una combinación que el jugador está obligado a usar entre los dados libres:
+    // generala, escalera, póker o full (los 5 dados), o una pierna (3 iguales).
+    // Devuelve { nombre, indices } con las posiciones dentro de `dados`, o null.
+    function jugadaObligatoria(dados) {
+        const cuentas = {};
+        dados.forEach(dado => { cuentas[dado] = (cuentas[dado] || 0) + 1; });
+        const valores = Object.values(cuentas);
+
+        if (dados.length === 5) {
+            const todos = [0, 1, 2, 3, 4];
+            const unicosOrdenados = [...new Set(dados)].sort((a, b) => a - b).join('');
+            if (valores.includes(5)) return { nombre: 'Generala', indices: todos };
+            if (unicosOrdenados === '12345' || unicosOrdenados === '23456' || unicosOrdenados === '13456') {
+                return { nombre: 'Escalera', indices: todos };
+            }
+            if (valores.includes(4)) return { nombre: 'Póker', indices: todos };
+            if (valores.includes(3) && valores.includes(2)) return { nombre: 'Full', indices: todos };
+        }
+
+        for (const num in cuentas) {
+            if (cuentas[num] >= 3) {
+                const indices = [];
+                dados.forEach((d, i) => { if (d == num && indices.length < 3) indices.push(i); });
+                return { nombre: `Pierna de ${num}`, indices };
+            }
+        }
+        return null;
+    }
+
+    return { calcularPuntuacion, dadosInutiles, jugadaObligatoria };
 });
