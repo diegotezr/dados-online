@@ -12,7 +12,7 @@ const PUNTOS_PARA_ABRIR = 750;
 const PUNTOS_PARA_GANAR = 3000;
 const NUM_DADOS = 5;
 const MAX_JUGADORES = 10;
-const ESPERA_TRAS_PERDER_MS = 4000;   // tiempo para ver los dados antes de pasar el turno
+const ESPERA_TRAS_PERDER_MS = 5000;   // tiempo para ver los dados antes de pasar el turno
 const SALA_INACTIVA_MS = 30 * 24 * 60 * 60 * 1000;   // una partida sin uso se borra a los 30 días
 const MAX_MENSAJES = 100;
 const LARGO_MENSAJE = 300;
@@ -47,8 +47,9 @@ function crearSala() {
         puntosTurno: 0,
         obligatorios: [],
         jugadaObligatoria: null,
-        culo: false,
-        volteo: 0,
+        culoArmado: false,     // el jugador pidió que el próximo tiro sea de CULO
+        culo: false,           // el tiro actual fue de CULO
+        caras: null,           // en un tiro de CULO, la cara de arriba de cada dado
         tirada: 0,
         enBust: false,
         ganador: null,
@@ -78,8 +79,9 @@ function estadoPublico(sala) {
         puntosTurno: sala.puntosTurno,
         obligatorios: sala.obligatorios,
         jugadaObligatoria: sala.jugadaObligatoria,
+        culoArmado: sala.culoArmado,
         culo: sala.culo,
-        volteo: sala.volteo,
+        caras: sala.caras,
         tirada: sala.tirada,
         enBust: sala.enBust,
         ganador: sala.ganador,
@@ -122,6 +124,8 @@ async function cargarPartidas() {
         sala.bustTimer = null;
         sala.chat = sala.chat || [];
         sala.chatSeq = sala.chatSeq || 0;
+        sala.culoArmado = !!sala.culoArmado;
+        sala.caras = sala.caras || null;
         sala.jugadores.forEach(j => { j.conectado = false; j.socketId = null; });
         if (sala.enBust) {
             // Se reinició el servidor justo mientras se pasaba el turno.
@@ -157,7 +161,9 @@ function iniciarNuevoTurno(sala) {
     sala.fijos.fill(false);
     sala.obligatorios = [];
     sala.jugadaObligatoria = null;
+    sala.culoArmado = false;
     sala.culo = false;
+    sala.caras = null;
 }
 
 function pasarTurno(sala) {
@@ -185,11 +191,6 @@ function marcarObligatoria(sala) {
 
 // Devuelve un mensaje de error si la selección actual no es válida.
 function validarSeleccion(sala, jugador) {
-    const puntosMesa = calcularPuntuacion(indicesLibres(sala).map(i => sala.dados[i]));
-    if (puntosMesa === 0) return 'Con esta cara no hay jugada. Probá con CULO.';
-    if (jugador.puntaje + sala.puntosTurno + puntosMesa > PUNTOS_PARA_GANAR) {
-        return `Con estos dados te pasás de ${PUNTOS_PARA_GANAR}. Probá con CULO.`;
-    }
     const seleccion = elegidos(sala);
     if (seleccion.length === 0) return 'Debes seleccionar al menos un dado con puntos para continuar.';
     if (sala.obligatorios.some(i => !sala.sel[i])) return `La jugada "${sala.jugadaObligatoria}" es obligatoria.`;
@@ -234,13 +235,20 @@ function lanzar(sala, jugador) {
         }
     }
 
+    // Tiro de CULO (pedido antes de tirar): cada dado vale su cara de abajo (1-6, 2-5, 3-4).
+    const deCulo = sala.culoArmado;
+    sala.culoArmado = false;
+    sala.culo = deCulo;
+    sala.caras = deCulo ? new Array(NUM_DADOS).fill(null) : null;
     for (let i = 0; i < NUM_DADOS; i++) {
-        if (!sala.fijos[i]) sala.dados[i] = crypto.randomInt(1, 7);
+        if (sala.fijos[i]) continue;
+        const arriba = crypto.randomInt(1, 7);
+        sala.dados[i] = deCulo ? 7 - arriba : arriba;
+        if (deCulo) sala.caras[i] = arriba;
     }
     sala.sel.fill(false);
     sala.obligatorios = [];
     sala.jugadaObligatoria = null;
-    sala.culo = false;
     sala.tirada++;
 
     const disponibles = sala.dados.filter((_, i) => !sala.fijos[i]);
@@ -253,22 +261,19 @@ function lanzar(sala, jugador) {
         return null;
     }
 
-    // El jugador puede leer la tirada por arriba o "de CULO" (contracara: 1-6, 2-5, 3-4).
-    // Solo pierde el turno si ninguna de las dos lecturas le sirve.
     const faltan = PUNTOS_PARA_GANAR - jugador.puntaje - sala.puntosTurno;
-    const puntosArriba = calcularPuntuacion(disponibles);
-    const puntosCulo = calcularPuntuacion(disponibles.map(v => 7 - v));
-    const sirve = puntos => puntos > 0 && puntos <= faltan;
-
-    if (!sirve(puntosArriba) && !sirve(puntosCulo)) {
-        if (puntosArriba === 0 && puntosCulo === 0) {
-            const perdidos = sala.puntosTurno;
-            perderTurno(sala, perdidos > 0
-                ? `¡Mala suerte, ${jugador.nombre}! No hay jugada posible, ni de culo. Pierde ${perdidos} puntos del turno.`
-                : `¡Mala suerte, ${jugador.nombre}! No hay jugada posible, ni de culo.`);
-        } else {
-            perderTurno(sala, `¡${jugador.nombre} se pasó! Con lo que hay en la mesa superaba los ${PUNTOS_PARA_GANAR}, ni de culo se salva. Sigue con ${jugador.puntaje}.`);
-        }
+    const puntosMesa = calcularPuntuacion(disponibles);
+    const comoSalio = deCulo ? ' (de culo)' : '';
+    if (puntosMesa === 0) {
+        const perdidos = sala.puntosTurno;
+        perderTurno(sala, perdidos > 0
+            ? `¡Mala suerte, ${jugador.nombre}! No hay jugada posible${comoSalio}. Pierde ${perdidos} puntos del turno.`
+            : `¡Mala suerte, ${jugador.nombre}! No hay jugada posible${comoSalio}.`);
+        return null;
+    }
+    if (puntosMesa > faltan) {
+        // Los puntos de la mesa lo pasan de la meta: pierde el turno.
+        perderTurno(sala, `¡${jugador.nombre} se pasó! Con ${sala.puntosTurno} del turno y ${puntosMesa} en la mesa${comoSalio} superaba los ${PUNTOS_PARA_GANAR}. Sigue con ${jugador.puntaje}.`);
         return null;
     }
 
@@ -483,16 +488,12 @@ io.on('connection', (socket) => {
     accion('lanzar', enSuTurno(lanzar));
     accion('plantarse', enSuTurno(plantarse));
 
+    // CULO se pide ANTES de tirar y vale solo para el próximo tiro.
     accion('culo', enSuTurno((sala, jugador) => {
-        if (sala.dados.length === 0) return 'Primero tenés que lanzar los dados.';
-        indicesLibres(sala).forEach(i => { sala.dados[i] = 7 - sala.dados[i]; });
-        sala.culo = !sala.culo;
-        sala.volteo++;
-        sala.sel.fill(false);
-        marcarObligatoria(sala);
-        avisar(sala, sala.culo
-            ? `🍑 ${jugador.nombre} juega de CULO`
-            : `${jugador.nombre} vuelve a la cara de arriba`, sala.culo ? 'culo' : 'info');
+        sala.culoArmado = !sala.culoArmado;
+        avisar(sala, sala.culoArmado
+            ? `🍑 ${jugador.nombre} va a tirar de CULO`
+            : `${jugador.nombre} ya no tira de culo`, sala.culoArmado ? 'culo' : 'info');
     }));
 
     accion('saltarTurno', (sala, jugador) => {

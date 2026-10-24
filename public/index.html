@@ -481,8 +481,8 @@
             Si apartás los 5 dados, son <b>dados calientes</b> y volvés a lanzar los 5.</p>
             <p><b>Las combinaciones son obligatorias:</b> si sale una pierna, escalera, full o póker, tenés que usarla entera.
             Los 1 y 5 sueltos sí los podés elegir: por ejemplo, con 1-5-5 podés quedarte solo con el 1.</p>
-            <p><b>🍑 CULO:</b> en cualquier tirada podés tocar CULO para leer la cara de abajo de los dados que acabás de tirar (1↔6, 2↔5, 3↔4).
-            Solo perdés el turno si no te sirve ni la cara de arriba ni la de abajo.</p>
+            <p><b>🍑 CULO:</b> antes de cualquier tiro podés tocar "Tirar de CULO". Ese tiro se lee por la cara de abajo de cada dado
+            (6→1, 5→2, 4→3 y al revés). Vale solo para ese tiro y tiene que pedirse antes de tirar.</p>
             <p>Para empezar a sumar necesitás <b id="reglaAbrir">750</b> puntos en un solo turno.
             Gana quien llega a <b id="reglaGanar">3000</b> exactos, o quien saca <b>generala</b>.
             Si los puntos de la mesa (sumados a los que ya tenés) te pasan de la meta, perdés el turno y te quedás con lo que tenías al empezarlo.</p>
@@ -582,8 +582,6 @@
         let estado = null;
         let ultimoAvisoId = null;
         let ultimaTirada = null;
-        let ultimoVolteo = null;
-        let dadosPrevios = [];
         let eraMiTurno = false;
 
         ui.nombreInput.value = leer('dados_nombre') || '';
@@ -717,6 +715,64 @@
             let ultimoT = performance.now();
 
             const aleatorio = (a, b) => a + Math.random() * (b - a);
+
+            // ---------- Cubo 3D (matrices de rotación 3x3) ----------
+            const multiplicar = (a, b) => {
+                const r = new Array(9);
+                for (let f = 0; f < 3; f++) for (let c = 0; c < 3; c++) {
+                    r[f * 3 + c] = a[f * 3] * b[c] + a[f * 3 + 1] * b[3 + c] + a[f * 3 + 2] * b[6 + c];
+                }
+                return r;
+            };
+            const aplicar = (m, v) => [
+                m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
+                m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
+                m[6] * v[0] + m[7] * v[1] + m[8] * v[2]
+            ];
+            function rotacion(eje, angulo) {
+                const [x, y, z] = eje, c = Math.cos(angulo), s = Math.sin(angulo), t = 1 - c;
+                return [t * x * x + c, t * x * y - s * z, t * x * z + s * y,
+                        t * x * y + s * z, t * y * y + c, t * y * z - s * x,
+                        t * x * z - s * y, t * y * z + s * x, t * z * z + c];
+            }
+            const rotX = a => rotacion([1, 0, 0], a);
+            const rotY = a => rotacion([0, 1, 0], a);
+            // Dado real: caras opuestas suman 7. La cara que mira a la cámara (+z) es "la de arriba".
+            const CARAS_3D = [
+                { valor: 1, n: [0, 0, 1], esquinas: [[-.5, -.5, .5], [.5, -.5, .5], [.5, .5, .5], [-.5, .5, .5]] },
+                { valor: 6, n: [0, 0, -1], esquinas: [[.5, -.5, -.5], [-.5, -.5, -.5], [-.5, .5, -.5], [.5, .5, -.5]] },
+                { valor: 3, n: [1, 0, 0], esquinas: [[.5, -.5, .5], [.5, -.5, -.5], [.5, .5, -.5], [.5, .5, .5]] },
+                { valor: 4, n: [-1, 0, 0], esquinas: [[-.5, -.5, -.5], [-.5, -.5, .5], [-.5, .5, .5], [-.5, .5, -.5]] },
+                { valor: 2, n: [0, 1, 0], esquinas: [[-.5, .5, .5], [.5, .5, .5], [.5, .5, -.5], [-.5, .5, -.5]] },
+                { valor: 5, n: [0, -1, 0], esquinas: [[-.5, -.5, -.5], [.5, -.5, -.5], [.5, -.5, .5], [-.5, -.5, .5]] }
+            ];
+            const VERTICES = [];
+            for (const x of [-.5, .5]) for (const y of [-.5, .5]) for (const z of [-.5, .5]) VERTICES.push([x, y, z]);
+            // Rotación que deja cada valor mirando hacia arriba.
+            const ORIENTACION = {
+                1: rotacion([0, 0, 1], 0), 6: rotX(Math.PI), 3: rotY(-Math.PI / 2),
+                4: rotY(Math.PI / 2), 2: rotX(Math.PI / 2), 5: rotX(-Math.PI / 2)
+            };
+            const LUZ = (() => { const v = [-0.45, -0.55, 0.7], n = Math.hypot(...v); return v.map(c => c / n); })();
+            function ejeAlAzar() {
+                const v = [aleatorio(-1, 1), aleatorio(-1, 1), aleatorio(-1, 1)];
+                const n = Math.hypot(...v) || 1;
+                return v.map(c => c / n);
+            }
+            function envolvente(puntos) {
+                const p = puntos.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+                const cruz = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+                const mitad = lista => {
+                    const r = [];
+                    for (const q of lista) {
+                        while (r.length >= 2 && cruz(r[r.length - 2], r[r.length - 1], q) <= 0) r.pop();
+                        r.push(q);
+                    }
+                    r.pop();
+                    return r;
+                };
+                return mitad(p).concat(mitad(p.slice().reverse()));
+            }
             const facil = p => 1 - Math.pow(1 - p, 3);
             const rebote = p => { const c = 1.70158 + 1; return 1 + c * Math.pow(p - 1, 3) + 1.70158 * Math.pow(p - 1, 2); };
 
@@ -803,13 +859,14 @@
                 if (!estado || !estado.dados.length) return;
                 dados.forEach((d, i) => {
                     const t = objetivo(i);
-                    Object.assign(d, { x: t.x, y: t.y, s: t.s, z: t.z, rot: 0, escalaX: 1, visible: true, anim: null, valor: estado.dados[i] });
+                    Object.assign(d, { x: t.x, y: t.y, s: t.s, z: t.z, rot: 0, escalaX: 1, visible: true, anim: null, R: null, cara: null, valor: estado.dados[i] });
                 });
             }
 
             function tirar(alFin) {
                 const m = medidas();
                 const ahora = performance.now();
+                const deCulo = !!(estado.culo && estado.caras);
                 const libres = [];
                 for (let i = 0; i < NUM_DADOS; i++) if (!estado.fijos[i]) libres.push(i);
                 const orden = libres.slice().sort(() => Math.random() - 0.5);
@@ -817,41 +874,45 @@
                 orden.forEach((i, k) => {
                     const t = objetivo(i);
                     const ultimo = i === dadoUltimo;
+                    // En un tiro de culo el dado cae mostrando su cara de arriba y después se da vuelta.
+                    const cara = deCulo ? estado.caras[i] : estado.dados[i];
                     dados[i].anim = {
                         tipo: 'tirada',
                         t0: ahora + k * 70,
-                        dur: 760 + k * 90 + (ultimo ? 700 : 0),
+                        dur: 820 + k * 90 + (ultimo ? 700 : 0),
                         sx: W / 2 + aleatorio(-0.35, 0.35) * W,
                         sy: H + m.s * 1.3,
                         ex: t.x,
                         ey: t.y,
-                        giro: (Math.random() < 0.5 ? -1 : 1) * Math.PI * aleatorio(3, 6),
-                        final: estado.dados[i],
-                        impactos: 0,
-                        proximoCambio: 0
+                        eje: ejeAlAzar(),
+                        giro: Math.PI * aleatorio(4, 7),
+                        final: cara,
+                        impactos: 0
                     };
+                    dados[i].cara = deCulo ? cara : null;
                     dados[i].visible = false;
                 });
-                alTerminar = alFin;
+                alTerminar = deCulo ? () => darVueltaCulo(alFin) : alFin;
                 Sonido.cubilete();
             }
 
-            // CULO: cada dado libre gira sobre sí mismo y muestra la contracara.
-            function voltear(viejos) {
+            // Tiro de CULO: cada dado se da vuelta en 3D y queda mostrando la cara de abajo, que es la que vale.
+            function darVueltaCulo(alFin) {
                 const ahora = performance.now();
                 let k = 0;
+                banner('🍑 DE CULO', ['#ffe3ff', '#d94bff'], 1600, 1);
+                Sonido.culo();
+                flash(217, 75, 255, 0.3);
                 dados.forEach((d, i) => {
-                    if (estado.fijos[i]) return;
-                    d.anim = { tipo: 'volteo', t0: ahora + k * 50, dur: 360, viejo: viejos[i], nuevo: estado.dados[i] };
-                    chispas(d.x, d.y, 12, '230,130,255', 170);
+                    if (estado.fijos[i] || !d.cara) return;
+                    d.anim = { tipo: 'vuelta', t0: ahora + 300 + k * 110, dur: 700, desde: d.cara };
+                    d.R = ORIENTACION[d.cara];
                     k++;
                 });
-                Sonido.culo();
-                destello.r = 217; destello.g = 75; destello.b = 255; destello.a = 0.3;
-                if (estado.culo) banner('🍑 DE CULO', ['#ffe3ff', '#d94bff'], 1300, 1);
+                alTerminar = alFin;
             }
 
-            function animando() { return dados.some(d => d.anim && d.anim.tipo === 'tirada'); }
+            function animando() { return dados.some(d => d.anim); }
 
             // ---------- Partículas ----------
             function agregar(n, crear) { for (let i = 0; i < n; i++) particulas.push(crear()); }
@@ -895,6 +956,8 @@
             // ---------- Actualización por cuadro ----------
             function actualizar(dt, ahora) {
                 let quedan = 0;
+                // Si el turno pasó (mesa vacía), no queda nada que animar.
+                if (!estado.dados.length) dados.forEach(d => { d.anim = null; d.R = null; d.cara = null; });
                 dados.forEach((d, i) => {
                     const a = d.anim;
                     if (a && a.tipo === 'tirada') {
@@ -907,7 +970,10 @@
                         d.s = medidas().s;
                         // Altura: tres rebotes cada vez más bajos.
                         d.z = Math.abs(Math.cos(p * Math.PI * 3)) * Math.pow(1 - p, 2) * 1.15;
-                        d.rot = a.giro * (1 - e);
+                        d.rot = 0;
+                        // Gira en 3D alrededor de un eje al azar hasta quedar con su cara arriba.
+                        d.R = multiplicar(ORIENTACION[a.final], rotacion(a.eje, a.giro * (1 - e)));
+                        d.valor = a.final;
                         const impactos = Math.floor(p * 3 + 0.5);
                         while (a.impactos < impactos) {
                             a.impactos++;
@@ -916,32 +982,32 @@
                             polvo(d.x, d.y + d.s * 0.35, 7 * fuerza);
                             if (a.impactos === 1) sacudir(2.5);
                         }
-                        if (p < 0.8) {
-                            if (ahora > a.proximoCambio) {
-                                d.valor = 1 + Math.floor(Math.random() * 6);
-                                a.proximoCambio = ahora + 55 + p * 140;
-                            }
-                        } else {
-                            d.valor = a.final;
-                        }
                         if (p >= 1) {
                             d.anim = null;
                             d.z = 0;
-                            d.rot = 0;
+                            d.R = null;
                         } else {
                             quedan++;
                         }
                         return;
                     }
 
-                    if (a && a.tipo === 'volteo') {
+                    if (a && a.tipo === 'vuelta') {
                         const p = Math.max(0, Math.min(1, (ahora - a.t0) / a.dur));
-                        d.escalaX = Math.max(0.04, Math.abs(Math.cos(p * Math.PI)));
-                        d.valor = p < 0.5 ? a.viejo : a.nuevo;
-                        if (p >= 1) { d.anim = null; d.escalaX = 1; }
-                    } else {
-                        d.valor = estado.dados[i];
+                        const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+                        d.R = multiplicar(rotY(Math.PI * e), ORIENTACION[a.desde]);
+                        d.z = Math.sin(Math.PI * p) * 0.4;
+                        d.valor = a.desde;
+                        if (!a.chispas && p > 0.5) {
+                            a.chispas = true;
+                            chispas(d.x, d.y, 14, '230,130,255', 180);
+                            Sonido.golpe(0.5, 1.3);
+                        }
+                        if (p >= 1) { d.anim = null; d.R = null; d.cara = null; d.z = 0; }
+                        else quedan++;
+                        return;
                     }
+                    d.valor = d.cara || estado.dados[i];
 
                     // Resorte suave hacia su lugar (apartar, seleccionar, etc.).
                     const t = objetivo(i);
@@ -963,7 +1029,8 @@
                     fn();
                 }
 
-                mezclaCulo += ((estado.culo ? 1 : 0) - mezclaCulo) * (1 - Math.exp(-dt * 5));
+                const mesaDeCulo = estado.culoArmado || (estado.culo && estado.dados.length > 0);
+                mezclaCulo += ((mesaDeCulo ? 1 : 0) - mezclaCulo) * (1 - Math.exp(-dt * 5));
                 sacudida *= Math.exp(-dt * 9);
                 destello.a *= Math.exp(-dt * 3.5);
 
@@ -980,13 +1047,79 @@
             }
 
             // ---------- Dibujo ----------
+            function dibujarDado3D(d, i) {
+                const s = d.s * (1 + d.z * 0.5);
+                const deCulo = estado.culo && !estado.fijos[i] && !d.cara;
+                const tonos = deCulo ? ['#fdf3ff', '#e3c3f7', '#b98ad8'] : ['#fffdf6', '#efe5cf', '#cbbd9e'];
+                ctx.save();
+                ctx.translate(d.x, d.y);
+
+                // Silueta del cubo con su sombra (las aristas quedan redondeadas).
+                const contorno = envolvente(VERTICES.map(v => { const p = aplicar(d.R, v); return [p[0] * s, p[1] * s]; }));
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = (5 + d.z * 40) * dpr;
+                ctx.shadowOffsetX = (2 + d.z * 16) * dpr;
+                ctx.shadowOffsetY = (4 + d.z * 30) * dpr;
+                ctx.fillStyle = tonos[2];
+                ctx.strokeStyle = tonos[2];
+                ctx.lineJoin = 'round';
+                ctx.lineWidth = s * 0.06;
+                ctx.beginPath();
+                contorno.forEach((p, k) => k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowColor = 'transparent';
+
+                // Caras visibles, de la más inclinada a la más frontal, iluminadas desde arriba a la izquierda.
+                CARAS_3D
+                    .map(c => ({ c, n: aplicar(d.R, c.n) }))
+                    .filter(x => x.n[2] > 0.02)
+                    .sort((a, b) => a.n[2] - b.n[2])
+                    .forEach(({ c, n }) => {
+                        const [p0, p1, , p3] = c.esquinas.map(v => aplicar(d.R, v));
+                        ctx.save();
+                        ctx.transform((p1[0] - p0[0]) * s, (p1[1] - p0[1]) * s, (p3[0] - p0[0]) * s, (p3[1] - p0[1]) * s, p0[0] * s, p0[1] * s);
+                        const g = ctx.createLinearGradient(0, 0, 1, 1);
+                        g.addColorStop(0, tonos[0]);
+                        g.addColorStop(1, tonos[1]);
+                        ctx.fillStyle = g;
+                        ctx.beginPath();
+                        ctx.roundRect(0.03, 0.03, 0.94, 0.94, 0.16);
+                        ctx.fill();
+                        const luz = Math.max(0, n[0] * LUZ[0] + n[1] * LUZ[1] + n[2] * LUZ[2]);
+                        ctx.fillStyle = `rgba(45,28,10,${(1 - luz) * 0.5})`;
+                        ctx.fill();
+                        dibujarPuntosCara(c.valor);
+                        ctx.restore();
+                    });
+                ctx.restore();
+            }
+
+            // Puntos de una cara en coordenadas 0..1 (la transformación de la cara los deforma en perspectiva).
+            function dibujarPuntosCara(valor) {
+                const pos = { c: [.5, .5], ia: [.25, .25], im: [.25, .5], ib: [.25, .75], da: [.75, .25], dm: [.75, .5], db: [.75, .75] };
+                const caras = {
+                    1: ['c'], 2: ['ia', 'db'], 3: ['ia', 'c', 'db'], 4: ['ia', 'da', 'ib', 'db'],
+                    5: ['ia', 'da', 'c', 'ib', 'db'], 6: ['ia', 'da', 'im', 'dm', 'ib', 'db']
+                };
+                ctx.fillStyle = valor === 1 || valor === 4 ? '#c62828' : '#151515';
+                const r = valor === 1 ? 0.15 : 0.105;
+                caras[valor].forEach(clave => {
+                    ctx.beginPath();
+                    ctx.arc(pos[clave][0], pos[clave][1], r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
             function dibujarDado(d, i, ahora) {
                 if (!d.visible) return;
+                if (d.R) { dibujarDado3D(d, i); return; }
                 const fijo = estado.fijos[i];
                 const sel = !fijo && estado.sel[i] && !d.anim;
                 const obligatorio = sel && estado.obligatorios.includes(i);
-                const deCulo = estado.culo && !fijo;
-                const perdido = estado.enBust && !d.anim;
+                const deCulo = estado.culo && !fijo && !d.cara;
+                const perdido = estado.enBust && !d.anim && !d.cara && !animando();
                 const s = d.s * (1 + d.z * 0.5);
                 const radio = s * 0.2;
 
@@ -1065,6 +1198,28 @@
                     ctx.fill();
                 }
                 ctx.restore();
+
+                // En un tiro de culo: qué salió arriba y cuánto vale (ej. 6→1).
+                if (deCulo && estado.caras && estado.caras[i] && !d.anim) {
+                    const tam = Math.max(11, W / 34);
+                    const texto = `${estado.caras[i]}→${estado.dados[i]}`;
+                    ctx.save();
+                    ctx.font = `${tam}px Bungee, Rubik, sans-serif`;
+                    const ancho = ctx.measureText(texto).width + tam;
+                    const y = d.y + d.s / 2 + tam * 0.6;
+                    ctx.fillStyle = '#9325cf';
+                    ctx.shadowColor = '#d94bff';
+                    ctx.shadowBlur = 10 * dpr;
+                    ctx.beginPath();
+                    ctx.roundRect(d.x - ancho / 2, y, ancho, tam * 1.5, tam * 0.75);
+                    ctx.fill();
+                    ctx.shadowColor = 'transparent';
+                    ctx.fillStyle = '#fff';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(texto, d.x, y + tam * 0.78);
+                    ctx.restore();
+                }
             }
 
             // Puntos tallados: rojos para el 1 y el 4, negros para el resto.
@@ -1180,7 +1335,7 @@
                 if (!estado.dados.length) {
                     const j = estado.jugadores[estado.turno];
                     let texto = '';
-                    if (estado.fase === 'jugando') texto = esMiTurno() ? '¡Lanzá los dados!' : `Esperando a ${j ? j.nombre : ''}…`;
+                    if (estado.fase === 'jugando') texto = esMiTurno() ? (estado.culoArmado ? '¡Lanzá de culo!' : '¡Lanzá los dados!') : `Esperando a ${j ? j.nombre : ''}…`;
                     ctx.fillStyle = 'rgba(255,255,255,0.9)';
                     ctx.font = `${Math.max(15, W / 17)}px Bungee, Rubik, sans-serif`;
                     ctx.textAlign = 'center';
@@ -1214,11 +1369,13 @@
                 dibujarParticulas();
                 ctx.restore();
 
-                if (estado.culo && estado.dados.length) {
+                const cartelCulo = estado.culo && estado.dados.length ? '🍑 TIRO DE CULO'
+                    : estado.culoArmado ? '🍑 PRÓXIMO TIRO: DE CULO' : '';
+                if (cartelCulo) {
                     const pulso = 0.75 + 0.25 * Math.sin(ahora / 200);
                     const tam = Math.max(11, W / 30);
                     ctx.font = `${tam}px Bungee, Rubik, sans-serif`;
-                    const texto = '🍑 DE CULO';
+                    const texto = cartelCulo;
                     const ancho = ctx.measureText(texto).width + tam * 1.4;
                     ctx.globalAlpha = pulso;
                     ctx.fillStyle = '#c03be6';
@@ -1265,7 +1422,7 @@
             }
 
             return {
-                redimensionar, colocarSinAnimar, tirar, voltear, animando, dadoEn, centro,
+                redimensionar, colocarSinAnimar, tirar, animando, dadoEn, centro,
                 chispas, brasas, confeti, banner, flash, sacudir,
                 get W() { return W; }, get H() { return H; }
             };
@@ -1359,9 +1516,7 @@
             if (avisoNuevo) ultimoAvisoId = avisoNuevo.id;
 
             const huboTirada = estado.tirada !== ultimaTirada;
-            const huboVolteo = estado.volteo !== ultimoVolteo;
             ultimaTirada = estado.tirada;
-            ultimoVolteo = estado.volteo;
 
             if (primerEstado) {
                 Mesa.redimensionar();
@@ -1374,13 +1529,11 @@
                     render();
                 });
             } else {
-                if (huboVolteo && estado.dados.length > 0) Mesa.voltear(dadosPrevios);
                 if (avisoNuevo) {
                     mostrarAviso(avisoNuevo.texto, avisoNuevo.tipo);
                     efectosAviso(avisoNuevo);
                 }
             }
-            dadosPrevios = estado.dados.slice();
 
             const miTurno = esMiTurno();
             if (miTurno && !eraMiTurno && !primerEstado) { vibrar(200); Sonido.turno(); }
@@ -1434,7 +1587,11 @@
         }
 
         function efectosAviso(aviso) {
-            if (/ganó con/.test(aviso.texto)) {
+            if (aviso.tipo === 'culo') {
+                Sonido.culo();
+                Mesa.flash(217, 75, 255, 0.25);
+                Mesa.banner('🍑 CULO', ['#ffe3ff', '#d94bff'], 1100, 0.9);
+            } else if (/ganó con/.test(aviso.texto)) {
                 Mesa.banner('¡VICTORIA!', ['#fff6c8', '#f5c542'], 3000, 1.2);
                 Mesa.confeti(160);
                 Mesa.flash(255, 215, 90, 0.5);
@@ -1693,7 +1850,7 @@
             const enSala = !!salaActual && !!estado;
             ui.pantallaInicio.classList.toggle('oculto', enSala);
             ui.pantallaSala.classList.toggle('oculto', !enSala);
-            document.body.classList.toggle('modo-culo', enSala && !!estado.culo && estado.dados.length > 0);
+            document.body.classList.toggle('modo-culo', enSala && (!!estado.culoArmado || (!!estado.culo && estado.dados.length > 0)));
             if (!enSala) return;
 
             ui.codigoSala.textContent = estado.codigo;
@@ -1766,7 +1923,9 @@
             ui.textoTurno.classList.toggle('miTurno', miTurno);
             if (terminado) ui.textoTurno.textContent = 'Partida terminada';
             else ui.textoTurno.textContent = miTurno ? '¡TU TURNO!' : `Turno de ${j ? j.nombre : '-'}`;
-            ui.insigniaCulo.classList.toggle('oculto', !(estado.culo && estado.dados.length > 0));
+            const tiroDeCulo = !!estado.culo && estado.dados.length > 0;
+            ui.insigniaCulo.classList.toggle('oculto', !(tiroDeCulo || estado.culoArmado));
+            ui.insigniaCulo.textContent = estado.culoArmado ? '🍑 PRÓXIMO TIRO: DE CULO' : '🍑 TIRO DE CULO';
 
             // Puntos
             const seleccion = seleccionActual();
@@ -1780,13 +1939,12 @@
             const caraSirve = mesa > 0 && mesa <= faltan;
 
             let ayuda = '';
+            if (tiroDeCulo && !rodando) ayuda = '🍑 De culo: cada dado vale su cara de abajo (6→1, 5→2, 4→3). ';
             if (hayDados && !rodando && !estado.enBust && estado.jugadaObligatoria) {
-                ayuda = `🔒 ${estado.jugadaObligatoria}: es obligatoria. `;
+                ayuda += `🔒 ${estado.jugadaObligatoria}: es obligatoria. `;
             }
-            if (miTurno && hayDados && !rodando) {
-                if (mesa === 0) ayuda = '😬 Con esta cara no hay jugada… ¿y de CULO?';
-                else if (!caraSirve) ayuda = `⚠️ Así te pasás de ${meta}… ¿y de CULO?`;
-                else if (seleccion.length === 0) ayuda += 'Tocá los dados con puntos para apartarlos.';
+            if (miTurno && hayDados && !rodando && caraSirve) {
+                if (seleccion.length === 0) ayuda += 'Tocá los dados con puntos para apartarlos.';
                 else if (puntosSeleccion === 0 || dadosInutiles(seleccion).length > 0) ayuda += '⚠️ Hay dados elegidos que no suman puntos.';
                 else ayuda += `Seleccionados: +${puntosSeleccion}`;
             }
@@ -1796,12 +1954,12 @@
             const puedeJugar = miTurno && !rodando;
             const seleccionValida = seleccion.length > 0 && puntosSeleccion > 0 && dadosInutiles(seleccion).length === 0;
             ui.lanzarBtn.disabled = !puedeJugar || (hayDados && (!caraSirve || !seleccionValida));
-            ui.lanzarBtn.textContent = hayDados ? '🎲 Seguir' : '🎲 Lanzar';
+            ui.lanzarBtn.textContent = estado.culoArmado ? (hayDados ? '🍑 Seguir de culo' : '🍑 Lanzar de culo') : (hayDados ? '🎲 Seguir' : '🎲 Lanzar');
             ui.plantarseBtn.disabled = !puedeJugar || !hayDados || !caraSirve || !seleccionValida;
             ui.culoBtn.classList.toggle('oculto', terminado);
-            ui.culoBtn.disabled = !puedeJugar || !hayDados;
-            ui.culoBtn.classList.toggle('activo', !!estado.culo && hayDados);
-            ui.culoBtn.textContent = estado.culo && hayDados ? '🍑 DE CULO · tocá para volver' : '🍑 CULO';
+            ui.culoBtn.disabled = !puedeJugar;
+            ui.culoBtn.classList.toggle('activo', !!estado.culoArmado);
+            ui.culoBtn.textContent = estado.culoArmado ? '🍑 CULO ACTIVADO ✓' : '🍑 Tirar de CULO';
             ui.saltarBtn.classList.toggle('oculto', !(soyAnfitrion() && estado.fase === 'jugando' && j && j.id !== miId));
         }
 
