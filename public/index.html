@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1e7a38">
+    <title>Dados Online</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { margin: 0; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f0f0f0;
+            color: #222;
+            padding: 12px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            -webkit-tap-highlight-color: transparent;
+        }
+        .tarjeta {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { margin: 4px 0 12px; font-size: 1.6em; }
+        button {
+            padding: 14px 20px;
+            margin: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            touch-action: manipulation;
+        }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        button.gris { background: #6c757d; }
+        button.verde { background: #28a745; }
+        button.gris:disabled, button.verde:disabled { background: #ccc; }
+        button.chico { padding: 8px 12px; font-size: 14px; }
+        button.texto { background: none; color: #007bff; padding: 8px; font-size: 15px; }
+        input {
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            margin: 6px 0;
+            text-align: center;
+        }
+        input:focus { outline: none; border-color: #007bff; }
+        #codigoInput { text-transform: uppercase; letter-spacing: 6px; font-weight: bold; }
+        .separador { margin: 18px 0 10px; color: #888; }
+        .oculto { display: none !important; }
+
+        /* Barra de sala */
+        #barraSala {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        #codigoSala {
+            font-size: 1.1em;
+            font-weight: bold;
+            letter-spacing: 3px;
+            background: #eef4ff;
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+
+        /* Puntuaciones */
+        #listaPuntuaciones {
+            list-style: none;
+            padding: 0;
+            margin: 8px 0;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        #listaPuntuaciones li {
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: #eee;
+            font-size: 1em;
+        }
+        #listaPuntuaciones li.activo {
+            background: #ffc107;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(255,193,7,0.5);
+        }
+        #listaPuntuaciones li.yo { outline: 2px solid #007bff; }
+        #listaPuntuaciones li.desconectado { opacity: 0.5; }
+        .etiqueta { font-size: 0.75em; color: #a15c00; display: block; }
+
+        #infoTurno { margin: 10px 0; font-size: 1.35em; font-weight: bold; color: #333; }
+        #infoTurno.miTurno { color: #1e7a38; }
+
+        canvas {
+            display: block;
+            width: 100%;
+            max-width: 600px;
+            margin: 10px auto 0;
+            border: 1px solid #ccc;
+            touch-action: none;
+            background: #2ea34b; /* Color de mesa de casino */
+            border-radius: 10px;
+        }
+        #gameInfo { margin: 12px 0; font-size: 1.25em; }
+        #ayudaSeleccion { color: #666; font-size: 0.9em; min-height: 1.2em; }
+        #botones { display: flex; justify-content: center; flex-wrap: wrap; }
+        #botones button { flex: 1 1 140px; max-width: 220px; }
+
+        /* Lobby */
+        #lobby p { font-size: 1.1em; }
+
+        /* Fin de partida */
+        #panelFin {
+            background: #fff8e1;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+
+        /* Reglas */
+        details { margin-top: 16px; text-align: left; }
+        summary { cursor: pointer; font-weight: bold; text-align: center; color: #007bff; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        td { padding: 6px; border-bottom: 1px solid #eee; }
+        td:last-child { text-align: right; font-weight: bold; }
+
+        /* Avisos */
+        #avisos {
+            position: fixed;
+            left: 12px; right: 12px;
+            top: calc(12px + env(safe-area-inset-top));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .aviso {
+            max-width: 500px;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: white;
+            background: #333;
+            font-size: 1em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            animation: entrar 0.25s ease-out;
+        }
+        .aviso.bien { background: #1e7a38; }
+        .aviso.mal { background: #c62828; }
+        .aviso.error { background: #e65100; }
+        @keyframes entrar { from { transform: translateY(-20px); opacity: 0; } to { transform: none; opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div id="avisos"></div>
+
+    <!-- Pantalla de inicio -->
+    <div id="pantallaInicio" class="tarjeta">
+        <h1>🎲 Dados Online</h1>
+        <input id="nombreInput" maxlength="16" placeholder="Tu nombre" autocomplete="nickname">
+        <button id="crearBtn" class="verde" style="width:100%">Crear partida</button>
+        <div class="separador">— o unite a una —</div>
+        <input id="codigoInput" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters">
+        <button id="unirseBtn" style="width:100%">Unirme</button>
+    </div>
+
+    <!-- Pantalla de sala / juego -->
+    <div id="pantallaSala" class="tarjeta oculto">
+        <div id="barraSala">
+            <span>Sala <span id="codigoSala">----</span></span>
+            <span>
+                <button id="invitarBtn" class="chico">Invitar</button>
+                <button id="salirBtn" class="chico gris">Salir</button>
+            </span>
+        </div>
+
+        <ul id="listaPuntuaciones"></ul>
+
+        <div id="lobby">
+            <p id="textoLobby">Esperando jugadores…</p>
+            <button id="empezarBtn" class="verde">Empezar partida</button>
+        </div>
+
+        <div id="juego">
+            <div id="panelFin" class="oculto">
+                <div id="textoFin"></div>
+                <button id="revanchaBtn" class="verde">Jugar otra vez</button>
+            </div>
+
+            <div id="infoTurno">Turno de: -</div>
+            <canvas id="gameCanvas"></canvas>
+
+            <div id="gameInfo">
+                <span id="textoPuntuacion">Puntuación del turno: 0</span>
+                <div id="ayudaSeleccion"></div>
+            </div>
+
+            <div id="botones">
+                <button id="lanzarBtn">Lanzar dados</button>
+                <button id="plantarseBtn" class="gris" disabled>Plantarse</button>
+            </div>
+            <button id="saltarBtn" class="texto oculto">Saltar turno de este jugador</button>
+        </div>
+
+        <details>
+            <summary>Reglas y puntos</summary>
+            <table>
+                <tr><td>Cada 1</td><td>100</td></tr>
+                <tr><td>Cada 5</td><td>50</td></tr>
+                <tr><td>Tres 1</td><td>1000</td></tr>
+                <tr><td>Tres iguales (2 a 6)</td><td>número × 100</td></tr>
+                <tr><td>Escalera (5 dados)</td><td>500</td></tr>
+                <tr><td>Full (3 + 2 iguales)</td><td>600</td></tr>
+                <tr><td>Póker (4 iguales + 1)</td><td>700</td></tr>
+                <tr><td>Generala (5 iguales)</td><td>10000</td></tr>
+            </table>
+            <p>Tocá los dados con puntos para apartarlos y volvé a lanzar los demás. Si en una tirada no sale nada, perdés los puntos del turno.
+            Si apartás los 5 dados, son <b>dados calientes</b> y volvés a lanzar los 5.</p>
+            <p>Para empezar a sumar necesitás <b id="reglaAbrir">750</b> puntos en un solo turno.
+            Gana quien llega a <b id="reglaGanar">3000</b> exactos: si te pasás, no sumás ese turno.</p>
+        </details>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/puntuacion.js"></script>
+    <script>
+        const { calcularPuntuacion, dadosInutiles } = window.Puntuacion;
+        const NUM_DADOS = 5;
+        const ASPECT_RATIO = 0.45;
+
+        const $ = id => document.getElementById(id);
+        const ui = {
+            pantallaInicio: $('pantallaInicio'),
+            pantallaSala: $('pantallaSala'),
+            nombreInput: $('nombreInput'),
+            codigoInput: $('codigoInput'),
+            codigoSala: $('codigoSala'),
+            lobby: $('lobby'),
+            textoLobby: $('textoLobby'),
+            empezarBtn: $('empezarBtn'),
+            juego: $('juego'),
+            panelFin: $('panelFin'),
+            textoFin: $('textoFin'),
+            revanchaBtn: $('revanchaBtn'),
+            canvas: $('gameCanvas'),
+            ctx: $('gameCanvas').getContext('2d'),
+            lanzarBtn: $('lanzarBtn'),
+            plantarseBtn: $('plantarseBtn'),
+            saltarBtn: $('saltarBtn'),
+            textoPuntuacion: $('textoPuntuacion'),
+            ayudaSeleccion: $('ayudaSeleccion'),
+            infoTurno: $('infoTurno'),
+            listaPuntuaciones: $('listaPuntuaciones'),
+            avisos: $('avisos')
+        };
+
+        // --- Datos guardados en este celular ---
+        function leer(clave) { try { return localStorage.getItem(clave); } catch (e) { return null; } }
+        function guardar(clave, valor) { try { localStorage.setItem(clave, valor); } catch (e) {} }
+        function borrar(clave) { try { localStorage.removeItem(clave); } catch (e) {} }
+
+        function obtenerJugadorId() {
+            let id = leer('dados_jugadorId');
+            if (!id) {
+                id = Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
+                guardar('dados_jugadorId', id);
+            }
+            return id;
+        }
+
+        const jugadorId = obtenerJugadorId();
+        let salaActual = null;
+        let estado = null;
+        let ultimoAvisoId = null;
+        let ultimaTirada = null;
+        let eraMiTurno = false;
+
+        // Animación de tirada
+        let dadosMostrados = [];
+        let animando = false;
+
+        ui.nombreInput.value = leer('dados_nombre') || '';
+        const codigoUrl = new URLSearchParams(location.search).get('sala');
+        if (codigoUrl) ui.codigoInput.value = codigoUrl.toUpperCase().slice(0, 4);
+
+        // --- Avisos ---
+        function mostrarAviso(texto, tipo = 'info') {
+            const div = document.createElement('div');
+            div.className = 'aviso ' + tipo;
+            div.textContent = texto;
+            ui.avisos.appendChild(div);
+            while (ui.avisos.children.length > 3) ui.avisos.firstChild.remove();
+            setTimeout(() => div.remove(), 4000);
+        }
+
+        function vibrar(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+
+        // --- Conexión ---
+        const socket = io();
+
+        function alResponder(res) {
+            if (res && res.error) mostrarAviso(res.error, 'error');
+        }
+
+        function entrarASala(codigo) {
+            salaActual = codigo;
+            guardar('dados_sala', codigo);
+            history.replaceState(null, '', '?sala=' + codigo);
+        }
+
+        function salirDeSala() {
+            salaActual = null;
+            estado = null;
+            borrar('dados_sala');
+            history.replaceState(null, '', location.pathname);
+            render();
+        }
+
+        function pedirNombre() {
+            const nombre = ui.nombreInput.value.trim();
+            if (!nombre) { mostrarAviso('Escribí tu nombre primero.', 'error'); ui.nombreInput.focus(); return null; }
+            guardar('dados_nombre', nombre);
+            return nombre;
+        }
+
+        ui.crearBtn = $('crearBtn');
+        ui.crearBtn.addEventListener('click', () => {
+            const nombre = pedirNombre();
+            if (!nombre) return;
+            socket.emit('crear', { nombre, jugadorId }, res => {
+                if (res.error) return mostrarAviso(res.error, 'error');
+                entrarASala(res.codigo);
+            });
+        });
+
+        $('unirseBtn').addEventListener('click', unirse);
+        ui.codigoInput.addEventListener('keydown', e => { if (e.key === 'Enter') unirse(); });
+
+        function unirse() {
+            const nombre = pedirNombre();
+            if (!nombre) return;
+            const codigo = ui.codigoInput.value.trim().toUpperCase();
+            if (codigo.length !== 4) return mostrarAviso('El código tiene 4 letras.', 'error');
+            socket.emit('unirse', { codigo, nombre, jugadorId }, res => {
+                if (res.error) return mostrarAviso(res.error, 'error');
+                entrarASala(res.codigo);
+            });
+        }
+
+        // Al (re)conectar, vuelve a la sala en la que estaba este celular.
+        socket.on('connect', () => {
+            const codigo = salaActual || leer('dados_sala');
+            if (!codigo) return;
+            socket.emit('unirse', { codigo, jugadorId, soloReconectar: true }, res => {
+                if (res.error) {
+                    if (salaActual) mostrarAviso('La sala ya no existe.', 'error');
+                    salirDeSala();
+                } else {
+                    entrarASala(res.codigo);
+                }
+            });
+        });
+
+        socket.on('disconnect', () => {
+            if (salaActual) mostrarAviso('Se perdió la conexión. Reconectando…', 'error');
+        });
+
+        socket.on('estado', nuevo => {
+            if (!salaActual) return;
+            const primerEstado = !estado;
+            estado = nuevo;
+
+            if (estado.aviso && estado.aviso.id !== ultimoAvisoId) {
+                if (!primerEstado) mostrarAviso(estado.aviso.texto, estado.aviso.tipo);
+                ultimoAvisoId = estado.aviso.id;
+            }
+
+            if (estado.tirada !== ultimaTirada) {
+                if (!primerEstado && estado.dados.length > 0) animarTirada();
+                ultimaTirada = estado.tirada;
+            }
+
+            const miTurno = esMiTurno();
+            if (miTurno && !eraMiTurno && !primerEstado) vibrar(200);
+            eraMiTurno = miTurno;
+
+            render();
+        });
+
+        // --- Ayudantes de estado ---
+        function jugadorDeTurno() { return estado && estado.jugadores[estado.turno]; }
+        function esMiTurno() {
+            return !!estado && estado.fase === 'jugando' && !estado.enBust && jugadorDeTurno()?.id === jugadorId;
+        }
+        function soyAnfitrion() { return !!estado && estado.anfitrionId === jugadorId; }
+        function seleccionActual() {
+            return estado.dados.filter((_, i) => estado.sel[i] && !estado.fijos[i]);
+        }
+
+        // --- Botones ---
+        ui.lanzarBtn.addEventListener('click', () => { vibrar(30); socket.emit('lanzar', alResponder); });
+        ui.plantarseBtn.addEventListener('click', () => socket.emit('plantarse', alResponder));
+        ui.empezarBtn.addEventListener('click', () => socket.emit('empezar', alResponder));
+        ui.revanchaBtn.addEventListener('click', () => socket.emit('empezar', alResponder));
+        ui.saltarBtn.addEventListener('click', () => {
+            const j = jugadorDeTurno();
+            if (j && confirm(`¿Saltar el turno de ${j.nombre}?`)) socket.emit('saltarTurno', alResponder);
+        });
+        $('salirBtn').addEventListener('click', () => {
+            if (!confirm('¿Salir de la partida? Perdés tu lugar y tus puntos.')) return;
+            socket.emit('salir', () => salirDeSala());
+        });
+        $('invitarBtn').addEventListener('click', async () => {
+            const link = `${location.origin}${location.pathname}?sala=${salaActual}`;
+            const texto = `¡Vení a jugar a los dados! Sala ${salaActual}`;
+            try {
+                if (navigator.share) { await navigator.share({ title: 'Dados Online', text: texto, url: link }); return; }
+            } catch (e) { if (e.name === 'AbortError') return; }
+            try {
+                await navigator.clipboard.writeText(link);
+                mostrarAviso('Link copiado. Pegalo en WhatsApp.', 'bien');
+            } catch (e) {
+                prompt('Copiá este link y mandáselo a tus amigos:', link);
+            }
+        });
+
+        // --- Canvas ---
+        let anchoCanvas = 0, altoCanvas = 0;
+
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            anchoCanvas = ui.canvas.clientWidth || 300;
+            altoCanvas = anchoCanvas * ASPECT_RATIO;
+            ui.canvas.style.height = altoCanvas + 'px';
+            ui.canvas.width = Math.round(anchoCanvas * dpr);
+            ui.canvas.height = Math.round(altoCanvas * dpr);
+            ui.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            redibujarDados();
+        }
+
+        function getDiceLayout() {
+            const tamanoDado = anchoCanvas / 6.5;
+            const espacioEntreDados = tamanoDado / 4;
+            const anchoTotalDados = (NUM_DADOS * tamanoDado) + ((NUM_DADOS - 1) * espacioEntreDados);
+            const startX = (anchoCanvas - anchoTotalDados) / 2;
+            const startY = (altoCanvas - tamanoDado) / 2;
+            return { tamanoDado, espacioEntreDados, startX, startY };
+        }
+
+        function dibujarCara(valor, x, y, tamanoDado, seleccionado, fijo) {
+            const ctx = ui.ctx;
+            ctx.fillStyle = fijo ? '#e0e0e0' : 'white';
+            ctx.strokeStyle = fijo ? '#666' : (seleccionado ? '#ffeb3b' : 'black');
+            ctx.lineWidth = seleccionado && !fijo ? tamanoDado * 0.08 : tamanoDado * 0.04;
+
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(x, y, tamanoDado, tamanoDado, tamanoDado * 0.15);
+            else ctx.rect(x, y, tamanoDado, tamanoDado);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = (valor === 1 || valor === 4) ? '#d32f2f' : 'black';
+            if (fijo) ctx.fillStyle = '#666';
+
+            const tamanoPunto = tamanoDado / 9;
+            const p = tamanoDado / 4;
+            const pos = {
+                centro: { x: x + tamanoDado / 2, y: y + tamanoDado / 2 },
+                izqArr: { x: x + p, y: y + p },
+                izqMed: { x: x + p, y: y + tamanoDado / 2 },
+                izqAba: { x: x + p, y: y + tamanoDado - p },
+                derArr: { x: x + tamanoDado - p, y: y + p },
+                derMed: { x: x + tamanoDado - p, y: y + tamanoDado / 2 },
+                derAba: { x: x + tamanoDado - p, y: y + tamanoDado - p }
+            };
+
+            function dibujarPunto(posicion) {
+                ctx.beginPath();
+                ctx.arc(posicion.x, posicion.y, tamanoPunto, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            if (valor === 1) { dibujarPunto(pos.centro); }
+            else if (valor === 2) { dibujarPunto(pos.izqArr); dibujarPunto(pos.derAba); }
+            else if (valor === 3) { dibujarPunto(pos.izqArr); dibujarPunto(pos.centro); dibujarPunto(pos.derAba); }
+            else if (valor === 4) { dibujarPunto(pos.izqArr); dibujarPunto(pos.derArr); dibujarPunto(pos.izqAba); dibujarPunto(pos.derAba); }
+            else if (valor === 5) { dibujarPunto(pos.izqArr); dibujarPunto(pos.derArr); dibujarPunto(pos.centro); dibujarPunto(pos.izqAba); dibujarPunto(pos.derAba); }
+            else if (valor === 6) { dibujarPunto(pos.izqArr); dibujarPunto(pos.derArr); dibujarPunto(pos.izqMed); dibujarPunto(pos.derMed); dibujarPunto(pos.izqAba); dibujarPunto(pos.derAba); }
+        }
+
+        function redibujarDados() {
+            const ctx = ui.ctx;
+            ctx.clearRect(0, 0, anchoCanvas, altoCanvas);
+            if (!estado) return;
+
+            const dados = animando ? dadosMostrados : estado.dados;
+            if (!dados || dados.length === 0) {
+                const j = jugadorDeTurno();
+                let mensaje = '';
+                if (estado.fase === 'jugando') mensaje = esMiTurno() ? '¡Lanzá los dados!' : `Esperando a ${j ? j.nombre : ''}…`;
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${Math.max(16, anchoCanvas / 18)}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(mensaje, anchoCanvas / 2, altoCanvas / 2);
+                return;
+            }
+            const layout = getDiceLayout();
+            for (let i = 0; i < dados.length; i++) {
+                const posX = layout.startX + i * (layout.tamanoDado + layout.espacioEntreDados);
+                const sel = !animando && estado.sel[i];
+                dibujarCara(dados[i], posX, layout.startY, layout.tamanoDado, sel, estado.fijos[i]);
+            }
+        }
+
+        function animarTirada() {
+            animando = true;
+            const fin = Date.now() + 550;
+            const paso = () => {
+                if (!estado) { animando = false; return; }
+                dadosMostrados = estado.dados.map((v, i) => estado.fijos[i] ? v : 1 + Math.floor(Math.random() * 6));
+                redibujarDados();
+                if (Date.now() < fin) setTimeout(paso, 60);
+                else { animando = false; render(); }
+            };
+            paso();
+        }
+
+        ui.canvas.addEventListener('click', (evento) => {
+            if (!esMiTurno() || animando || estado.dados.length === 0) return;
+            const layout = getDiceLayout();
+            const rect = ui.canvas.getBoundingClientRect();
+            const clickX = (evento.clientX - rect.left) * (anchoCanvas / rect.width);
+            const clickY = (evento.clientY - rect.top) * (altoCanvas / rect.height);
+            const margen = layout.espacioEntreDados / 2;   // un poco más de área para el dedo
+
+            for (let i = 0; i < NUM_DADOS; i++) {
+                const dadoX = layout.startX + i * (layout.tamanoDado + layout.espacioEntreDados);
+                if (!estado.fijos[i] &&
+                    clickX >= dadoX - margen && clickX <= dadoX + layout.tamanoDado + margen &&
+                    clickY >= layout.startY - margen && clickY <= layout.startY + layout.tamanoDado + margen) {
+                    estado.sel[i] = !estado.sel[i];   // se muestra al instante; el servidor confirma
+                    vibrar(15);
+                    render();
+                    socket.emit('tocarDado', i, alResponder);
+                    break;
+                }
+            }
+        });
+
+        // --- Render general ---
+        function render() {
+            const enSala = !!salaActual && !!estado;
+            ui.pantallaInicio.classList.toggle('oculto', enSala);
+            ui.pantallaSala.classList.toggle('oculto', !enSala);
+            if (!enSala) return;
+
+            ui.codigoSala.textContent = estado.codigo;
+            $('reglaAbrir').textContent = estado.constantes.PUNTOS_PARA_ABRIR;
+            $('reglaGanar').textContent = estado.constantes.PUNTOS_PARA_GANAR;
+
+            // Lista de jugadores
+            ui.listaPuntuaciones.innerHTML = '';
+            estado.jugadores.forEach((jugador, index) => {
+                const li = document.createElement('li');
+                const nombre = document.createElement('span');
+                let prefijo = '';
+                if (jugador.id === estado.anfitrionId) prefijo += '👑 ';
+                if (!jugador.conectado) prefijo += '📵 ';
+                nombre.textContent = `${prefijo}${jugador.nombre}${jugador.id === jugadorId ? ' (vos)' : ''}: `;
+                const puntos = document.createElement('b');
+                puntos.textContent = jugador.puntaje;
+                li.append(nombre, puntos);
+                if (estado.fase !== 'lobby' && !jugador.haAbierto) {
+                    const et = document.createElement('span');
+                    et.className = 'etiqueta';
+                    et.textContent = 'sin abrir';
+                    li.appendChild(et);
+                }
+                if (estado.fase !== 'lobby' && index === estado.turno) li.classList.add('activo');
+                if (jugador.id === jugadorId) li.classList.add('yo');
+                if (!jugador.conectado) li.classList.add('desconectado');
+                ui.listaPuntuaciones.appendChild(li);
+            });
+
+            // Lobby
+            const enLobby = estado.fase === 'lobby';
+            ui.lobby.classList.toggle('oculto', !enLobby);
+            ui.juego.classList.toggle('oculto', enLobby);
+            if (enLobby) {
+                const anfitrion = estado.jugadores.find(j => j.id === estado.anfitrionId);
+                const n = estado.jugadores.length;
+                ui.textoLobby.textContent = soyAnfitrion()
+                    ? `${n} jugador${n === 1 ? '' : 'es'} en la sala. Tocá "Invitar" para mandar el link y empezá cuando estén todos.`
+                    : `Esperando a que ${anfitrion ? anfitrion.nombre : 'el anfitrión'} empiece la partida…`;
+                ui.empezarBtn.classList.toggle('oculto', !soyAnfitrion());
+                return;
+            }
+
+            // Fin
+            const terminado = estado.fase === 'fin';
+            ui.panelFin.classList.toggle('oculto', !terminado);
+            if (terminado) {
+                ui.textoFin.textContent = `🎉 ¡Ganó ${estado.ganador}! 🎉`;
+                ui.revanchaBtn.classList.toggle('oculto', !soyAnfitrion());
+            }
+
+            // Turno
+            const j = jugadorDeTurno();
+            const miTurno = esMiTurno();
+            ui.infoTurno.classList.toggle('miTurno', miTurno);
+            if (terminado) ui.infoTurno.textContent = 'Partida terminada';
+            else ui.infoTurno.textContent = miTurno ? '¡Es tu turno!' : `Turno de: ${j ? j.nombre : '-'}`;
+
+            // Puntos
+            const seleccion = seleccionActual();
+            const puntosSeleccion = calcularPuntuacion(seleccion);
+            ui.textoPuntuacion.textContent = `Puntuación del turno: ${estado.puntosTurno + puntosSeleccion}`;
+
+            let ayuda = '';
+            if (miTurno && estado.dados.length > 0) {
+                if (seleccion.length === 0) ayuda = 'Tocá los dados con puntos para apartarlos.';
+                else if (puntosSeleccion === 0 || dadosInutiles(seleccion).length > 0) ayuda = '⚠️ Hay dados elegidos que no suman puntos.';
+                else ayuda = `Seleccionados: +${puntosSeleccion}`;
+            }
+            ui.ayudaSeleccion.textContent = ayuda;
+
+            redibujarDados();
+
+            // Botones
+            const puedeJugar = miTurno && !animando;
+            ui.lanzarBtn.disabled = !puedeJugar;
+            ui.lanzarBtn.textContent = estado.dados.length > 0 ? 'Lanzar de nuevo' : 'Lanzar dados';
+            ui.plantarseBtn.disabled = !puedeJugar || estado.dados.length === 0 ||
+                (estado.puntosTurno === 0 && puntosSeleccion === 0);
+            ui.saltarBtn.classList.toggle('oculto', !(soyAnfitrion() && estado.fase === 'jugando' && j && j.id !== jugadorId));
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        new ResizeObserver(resizeCanvas).observe(ui.canvas);
+        resizeCanvas();
+        render();
+    </script>
+</body>
+</html>
